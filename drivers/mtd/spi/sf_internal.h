@@ -9,7 +9,6 @@
 #ifndef _SF_INTERNAL_H_
 #define _SF_INTERNAL_H_
 
-#include <linux/bitops.h>
 #include <linux/types.h>
 #include <linux/compiler.h>
 
@@ -67,19 +66,8 @@ struct flash_info {
 #define SPI_NOR_SKIP_SFDP	BIT(13)	/* Skip parsing of SFDP tables */
 #define USE_CLSR		BIT(14)	/* use CLSR command */
 #define SPI_NOR_HAS_SST26LOCK	BIT(15)	/* Flash supports lock/unlock via BPR */
-#define SPI_NOR_OCTAL_READ	BIT(16)	/* Flash supports Octal Read */
-#define SPI_NOR_OCTAL_DTR_READ	BIT(17)	/* Flash supports Octal DTR Read */
-#define UNLOCK_GLOBAL_BLOCK	BIT(18)	/* Unlock global block protection */
-#define SECT_4K_ONLY		BIT(19)	/* Use only CMD_ERASE_4K */
-#define SPI_NOR_SOFT_RESET	BIT(20)	/*
-					 * Used by flashes that do not define
-					 * any SFDP tables, i.e. in conjunction
-					 * with SPI_NOR_SKIP_SFDP.
-					 */
-#define SPI_NOR_DTR_BSWAP16	BIT(21) /* The byte order of 16-bit words is
-					 * swapped when read or written in DTR
-					 * mode compared to STR mode.
-					 */
+#define UNLOCK_GLOBAL_BLOCK	BIT(16)	/* Unlock global block protection */
+#define SECT_4K_ONLY		BIT(17)	/* Use only CMD_ERASE_4K */
 };
 
 extern const struct flash_info spi_nor_ids[];
@@ -93,16 +81,6 @@ int spi_flash_cmd_get_sw_write_prot(struct spi_flash *flash);
 
 #if CONFIG_IS_ENABLED(SPI_FLASH_MTD)
 int spi_flash_mtd_register(struct spi_flash *flash);
-void spi_flash_mtd_unregister(struct spi_flash *flash);
-#else
-static inline int spi_flash_mtd_register(struct spi_flash *flash)
-{
-	return 0;
-}
-
-static inline void spi_flash_mtd_unregister(struct spi_flash *flash)
-{
-}
+void spi_flash_mtd_unregister(void);
 #endif
-
 #endif /* _SF_INTERNAL_H_ */
