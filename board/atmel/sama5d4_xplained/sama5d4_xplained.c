@@ -6,7 +6,6 @@
 
 #include <common.h>
 #include <init.h>
-#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/at91_rstc.h>
@@ -102,6 +101,9 @@ void board_debug_uart_init(void)
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
+#ifdef CONFIG_DEBUG_UART
+	debug_uart_init();
+#endif
 	return 0;
 }
 #endif
@@ -219,7 +221,7 @@ void at91_pmc_init(void)
 #endif
 
 #if defined(CONFIG_OF_BOARD_SETUP)
-int ft_board_setup(void *fdt, gd_t *gd)
+int ft_board_setup(void *fdt, bd_t *bd)
 {
 	static const char * const wilc_compatibles[] = {
 		"microchip,wilc1000", "microchip,wilc3000", "atmel,wilc_sdio",
