@@ -8,7 +8,11 @@
 #include <atmel_lcd.h>
 
 #include "atmel_logo_8bpp.h"
+#ifdef SAMA5D27_T2
+#include "jti_logo_8bpp.h"
+#else
 #include "microchip_logo_8bpp.h"
+#endif
 
 void atmel_logo_info(vidinfo_t *info)
 {
