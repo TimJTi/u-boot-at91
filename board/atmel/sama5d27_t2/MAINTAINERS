@@ -1,0 +1,6 @@
+SAMA5D27 T2 BOARD
+M:	Tim Hardisty <timh@jti.uk.com>
+S:	Maintained
+F:	board/atmel/sama5d27_t2/
+F:	include/configs/sama5d27_t2.h
+F:	configs/sama5d27_t2_defconfig

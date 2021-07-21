@@ -192,6 +192,29 @@ config TARGET_SAMA5D27_SOM1_EK
 	  24AA02E48. The SAMA5D2 SiP integrates the ARM Cortex-A5
 	  processor-based SAMA5D2 MPU with up to 1 Gbit DDR2-SDRAM
 	  in a single package.
+    
+config TARGET_SAMA5D27_T2
+	bool "SAMA5D27 T2 board"
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	select CPU_V7A
+	select SUPPORT_SPL
+	select ATMEL_SFR
+	help
+    The SAMA5D27 T2 board uses a SAMA5D27-D5M processor,
+    a 1Gbit QSPI flash, 256k SPI flash, 128kbit SPI EEPROM,
+    and a multitude of application specific devices
+      GPS with motion sensors
+      RGB LED drivers
+      proximity and light sensors
+      Bluetooth LE module
+      24 bit RGB LCD interface
+      Dual CAN
+      Mono class D audio driver
+      USB-C
+      Kline-LIN
+      analogue and digital IO.
+
 
 config TARGET_SAMA5D27_WLSOM1_EK
 	bool "SAMA5D27 WLSOM1 EK board"
@@ -327,6 +350,7 @@ source "board/atmel/sama5d2_ptc_ek/Kconfig"
 source "board/atmel/sama5d2_xplained/Kconfig"
 source "board/atmel/sama5d27_som1_ek/Kconfig"
 source "board/atmel/sama5d27_wlsom1_ek/Kconfig"
+source "board/atmel/sama5d27_t2/Kconfig"
 source "board/atmel/sama5d2_icp/Kconfig"
 source "board/atmel/sama5d3_xplained/Kconfig"
 source "board/atmel/sama5d3xek/Kconfig"
