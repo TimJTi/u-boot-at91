@@ -219,7 +219,6 @@ config TARGET_SAMA5D27_T2
       Kline-LIN
       analogue and digital IO.
 
-
 config TARGET_SAMA5D27_WLSOM1_EK
 	bool "SAMA5D27 WLSOM1 EK board"
 	select SAMA5D2
@@ -350,8 +349,8 @@ source "board/atmel/sama7g5ek/Kconfig"
 source "board/atmel/sama5d2_ptc_ek/Kconfig"
 source "board/atmel/sama5d2_xplained/Kconfig"
 source "board/atmel/sama5d27_som1_ek/Kconfig"
-source "board/atmel/sama5d27_wlsom1_ek/Kconfig"
 source "board/atmel/sama5d27_t2/Kconfig"
+source "board/atmel/sama5d27_wlsom1_ek/Kconfig"
 source "board/atmel/sama5d2_icp/Kconfig"
 source "board/atmel/sama5d3_xplained/Kconfig"
 source "board/atmel/sama5d3xek/Kconfig"

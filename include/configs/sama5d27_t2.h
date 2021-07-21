@@ -70,8 +70,6 @@
   "lcdputs loading... ; " \
   "sf probe 1:0; " \
   "sf read 0x20008000 0xC0000 0x200000; "	\
-  "lcdputs 'load successful. Running Toucan2 app!' ; " \
-  "sleep 1 ; " \
   "go 0x20008000"
 
 #endif
