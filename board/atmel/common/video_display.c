@@ -26,7 +26,11 @@ int at91_video_show_board_info(void)
 	int i;
 	u32 len = 0;
 	char buf[255];
+#ifdef SAMA5D27_T2
+	char *corp = "JT Innovations Ltd.\n";
+#else
 	char *corp = "Microchip Technology Inc.\n";
+#endif
 	char temp[32];
 	struct udevice *dev, *con;
 	const char *s;
