@@ -1,0 +1,6 @@
+echo "This will run make savedefconfig and copy it as ./configs/sama5d27_t2_defconfig"
+read -n 1 -s -r -p "Press any key to continue"
+echo ""
+make savedefconfig
+echo ""
+cp ./defconfig ./configs/sama5d27_t2_defconfig
