@@ -11,7 +11,11 @@
 
 #include "at91-sama5_common.h"
 
+
+
 #define SAMA5D27_T2
+
+#define CONFIG_ARCH_MISC_INIT
 
 #undef CONFIG_SYS_AT91_MAIN_CLOCK
 #define CONFIG_SYS_AT91_MAIN_CLOCK      24000000 /* from 24 MHz crystal */
@@ -33,26 +37,19 @@
 #undef CONFIG_CMD_NAND
 
 /* SPI flash */
-
 #undef CONFIG_BOOTCOMMAND
 #undef CONFIG_SD_BOOT
-
-#ifdef CONFIG_QSPI_BOOT
 #undef CONFIG_BOOTARGS
-/*
-#define CONFIG_BOOTARGS \
-	"console=ttyS1,115200 earlyprintk root=/dev/mmcblk0p2 rw rootwait"
-*/
-#endif
 
 
 /* SPL */
+/*
 #define CONFIG_SPL_MAX_SIZE		0x10000
 #define CONFIG_SPL_BSS_START_ADDR	0x20000000
 #define CONFIG_SPL_BSS_MAX_SIZE		0x80000
 #define CONFIG_SYS_SPL_MALLOC_START	0x20080000
 #define CONFIG_SYS_SPL_MALLOC_SIZE	0x80000
-
+*/
 #define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 
 #ifdef CONFIG_SD_BOOT
@@ -65,13 +62,15 @@
 
 #ifdef CONFIG_QSPI_BOOT
 #undef CONFIG_BOOTCOMMAND
+/*
 #define CONFIG_BOOTCOMMAND		\
   "echo Trying to load from flash...; "	\
   "lcdputs loading... ; " \
   "sf probe 1:0; " \
   "sf read 0x20008000 0xC0000 0x200000; "	\
+  "cls;" \
   "go 0x20008000"
-
+*/  
 #endif
 
 #endif

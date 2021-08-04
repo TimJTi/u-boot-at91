@@ -64,7 +64,7 @@ static int utmi_clk_enable(struct clk *clk)
 		printf("UTMICK: unsupported mainck rate\n");
 		return -EINVAL;
 	}
-
+printf("UTMI ref clk=%d\n", utmi_ref_clk_freq);
 	if (plat->regmap_sfr) {
 		err = regmap_read(plat->regmap_sfr, AT91_SFR_UTMICKTRIM, &tmp);
 		if (err)

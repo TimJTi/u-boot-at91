@@ -1,5 +1,5 @@
 /dts-v1/;
-#include "sama5d2.dtsi"
+#include "sama5d27_som1.dtsi"
 #include "sama5d2-pinfunc.h"
 
 / {
@@ -9,6 +9,11 @@
 	memory {
 		reg = <0x20000000 0x4000000>;
 	};  
+  
+	aliases {
+		spi0 = &spi0;
+    spi1 = &qspi0;
+	};
 
 	chosen {
 		u-boot,dm-pre-reloc;
@@ -16,19 +21,28 @@
 	};
 
 	ahb {
+
 		usb1: ohci@00400000 {
 			num-ports = <3>;
-			atmel,vbus-gpio = <&pioA 42 0>;
+			atmel,vbus-gpio = <&pioA 42 1>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_usb_default>;
 			status = "okay";
-		};
+		};    
 
 		usb2: ehci@00500000 {
 			status = "okay";
 		};
 
 		apb {
+			i2c0: i2c@f8028000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c0_default>;
+				status = "okay";
+        
+        clock-frequency = <500000>;
+			};
+
 			hlcdc: hlcdc@f0000000 {
 				atmel,vl-bpix = <4>;
 				atmel,guard-time = <1>;
@@ -53,6 +67,7 @@
 					};
 				};
 			};
+      
 
 			qspi0: spi@f0020000 {
 				pinctrl-names = "default";
@@ -61,7 +76,7 @@
 				u-boot,dm-pre-reloc;
 
 				flash@0 {
-					compatible = "jedec,spi-nor";
+					compatible = "mt25ql01g,spi-nor";
 					reg = <0>;
 					spi-max-frequency = <83000000>;
 					spi-rx-bus-width = <4>;
@@ -78,7 +93,7 @@
 				u-boot,dm-pre-reloc;
         
         spi_flash@0 {
-					compatible = "microchip, at45";
+					compatible = "microchip, at25";
 					reg = <0>;
 					spi-max-frequency = <5000000>;
           pagesize = <64>;
@@ -87,7 +102,7 @@
         };         
 
 				spi_flash@1 {
-					compatible = "jedec,spi-nor";
+					compatible = "mt25ql256a,spi-nor";
 					reg = <1>;
 					spi-max-frequency = <50000000>;
 					u-boot,dm-pre-reloc;
@@ -103,6 +118,18 @@
 
 			pioA: gpio@fc038000 {
 				pinctrl {
+					pinctrl_i2c0_default: i2c0_default {
+						pinmux = <PIN_PD29__TWD0>,
+							 <PIN_PD30__TWCK0>;
+						bias-disable;
+					};
+
+					pinctrl_i2c1_default: i2c1_default {
+						pinmux = <PIN_PD4__TWD1>,
+							 <PIN_PD5__TWCK1>;
+						bias-disable;
+					};
+          
 					pinctrl_lcd_base: pinctrl_lcd_base {
 						pinmux = <PIN_PC5__LCDVSYNC>,
 							 <PIN_PC6__LCDHSYNC>,
@@ -148,15 +175,15 @@
 					};
 
 					pinctrl_usb_default: usb_default {
-						pinmux = <PIN_PB10__GPIO>;
+						pinmux = <PIN_PC18__GPIO>;
 						bias-disable;
 					};
 
 					pinctrl_usba_vbus: usba_vbus {
-						pinmux = <PIN_PB9__GPIO>;
+						pinmux = <PIN_PA29__GPIO>;
 						bias-disable;
 					};
-          
+       
           pinctrl_qspi0_sck_cs_default: qspi0_sck_cs_default {
             pinmux = <PIN_PA0__QSPI0_SCK>,
               <PIN_PA1__QSPI0_CS>;
@@ -165,10 +192,10 @@
           };
 
 					pinctrl_qspi0_dat_default: qspi0_dat_default {
-            pinmux = <PIN_PA2__QSPI0_IO0>,
-              <PIN_PA3__QSPI0_IO1>,
+            pinmux = <PIN_PA5__QSPI0_IO3>,
               <PIN_PA4__QSPI0_IO2>,
-              <PIN_PA5__QSPI0_IO3>;
+              <PIN_PA3__QSPI0_IO1>,
+              <PIN_PA2__QSPI0_IO0>;
             bias-pull-up;
             u-boot,dm-pre-reloc;
           };
@@ -176,8 +203,10 @@
           pinctrl_spi0_default: spi0_default {
             pinmux = <PIN_PA14__SPI0_SPCK>,
               <PIN_PA15__SPI0_MOSI>,
-              <PIN_PA16__SPI0_MISO>;
-            bias-disable;
+              <PIN_PA16__SPI0_MISO>,
+              <PIN_PA17__SPI0_NPCS0>,
+              <PIN_PA18__SPI0_NPCS1>;
+            bias-pull-up;
             u-boot,dm-pre-reloc;
           };
 				};
