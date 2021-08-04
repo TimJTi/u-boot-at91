@@ -6,6 +6,8 @@
 
 #include <common.h>
 #include <debug_uart.h>
+#include <dm.h>
+#include <i2c.h>
 #include <init.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
@@ -13,16 +15,138 @@
 #include <asm/arch/atmel_mpddrc.h>
 #include <asm/arch/atmel_sdhci.h>
 #include <asm/arch/clk.h>
+
 #include <asm/arch/gpio.h>
 #include <asm/arch/sama5d2.h>
 
-extern void at91_pda_detect(void);
+
+#if defined(CONFIG_ARCH_MISC_INIT)
+int arch_misc_init(void)
+{
+	struct udevice *dev;
+	int ret;
+  uchar val;
+  uchar buf[4];
+  /* set up ACT8945A */
+	ret = i2c_get_chip_for_busnum(0, 0x5B, 1, &dev);
+	if (ret) {
+		printf("Cannot find ACT8945A: %d\n", ret);
+		return 0;  
+  }
+  else {
+    /* set VDD_LED to 3V3 */
+    val = 0x39;    
+    dm_i2c_write(dev, 0x60, &val, 1);
+    /* enable VDD_LED */
+    val = 0x80;    
+    dm_i2c_write(dev, 0x61, &val, 1);
+    /*disable VDD for legacy GPS antenna*/
+    val = 0;
+    dm_i2c_write(dev, 0x65, &val, 1);
+    
+    mdelay(100);
+    
+    /* now set up and read ambient light sensor */
+    ret = i2c_get_chip_for_busnum(0, 0x39, 1, &dev);
+    if (ret) {
+      printf("Cannot find ADPS9901: %d\n", ret);
+      return 0;
+    }
+    else {
+      /* disable */
+      val = 0;
+      dm_i2c_write(dev, 0x80, &val, 1);      
+      /* ATIME default */
+      val = 0xED;
+      dm_i2c_write(dev, 0x81, &val, 1);
+      /* PTIME default */
+      val = 0xFF;
+      dm_i2c_write(dev, 0x82, &val, 1);
+      /* WTIME default */
+      val = 0xFF;
+      dm_i2c_write(dev, 0x83, &val, 1);    
+      /* PPCOUNT default */
+      val = 0x08;
+      dm_i2c_write(dev, 0x8E, &val, 1);      
+      /* CONTROL defaults */
+      val = 0x20;
+      dm_i2c_write(dev, 0x8F, &val, 1);
+      /* enable prox and ALS */
+      val = 0x07;
+      dm_i2c_write(dev, 0x80, &val, 1);    
+      
+      /* wait to accumulate some data */
+      mdelay(200);
+      
+      dm_i2c_read(dev, 0xB4, &buf[0], 2);
+
+      unsigned short int als = (((unsigned short int) buf[1]<<8) + ((unsigned short int) buf[0]));
+      if (als < 50) {
+        env_set("bootcmd", "\
+          echo Boot interrupted via ambient light sensor method; \
+          setcurs 0 10; \
+          lcdputs 'Boot interrupted, via light sensor.'; \
+          setcurs 0 11;\
+          sleep 1; \
+          lcdputs 'Insert USB Flash drive with firmware to load'; \
+          sleep 1;" );
+          
+      }
+      else  {
+        env_set("bootcmd", "\
+          echo Trying to load from flash...; 	\
+          lcdputs loading.; \
+          sf probe 1:0; \
+          sf read 0x20008000 0xC0000 0x200000; \
+          cls; \
+          go 0x20008000;");
+      }
+        
+    }
+  }
+  
+  return 0;    
+}
+#endif
 
 DECLARE_GLOBAL_DATA_PTR;
 
 static void board_usb_hw_init(void)
 {
-	atmel_pio4_set_pio_output(AT91_PIO_PORTA, 27, 1);
+	struct udevice *dev;
+	int ret;
+  uchar val;
+ 
+  
+  /*Ensure power is not enabled; use as device port for now */
+  atmel_pio4_set_pio_output(AT91_PIO_PORTC, 18, 0);
+  //atmel_pio4_set_pio_output(AT91_PIO_PORTC, 18, 1); // ENABLED!!
+
+  /*enable VBUS OK interrupt to detect connection*/
+	ret = i2c_get_chip_for_busnum(0, 0x22, 1, &dev);
+	if (ret) {
+		printf("Cannot find FUSB302: %d\n", ret);
+		//return 0;  
+  }
+  else {
+    val = 0x07;
+    /* power up the device */
+    dm_i2c_write(dev, 0x0B, &val, 1);    
+    /* enable VBUS detect interrupt */
+    val = 0x80;
+    dm_i2c_write(dev, 0x42, &val, 1);
+#if 0      
+    /* enable toggle functionality as a snk device */
+  
+    val = 0x25;
+    dm_i2c_write(dev, 0x08, &val, 1);
+#endif
+
+    /* enable interrupts */
+    val = 0x04;
+    dm_i2c_write(dev, 0x06, &val, 1);
+  }
+  
 }
 
 #ifdef CONFIG_BOARD_LATE_INIT
@@ -31,7 +155,6 @@ int board_late_init(void)
 #ifdef CONFIG_DM_VIDEO
 	at91_video_show_board_info();
 #endif
-	at91_pda_detect();
 	return 0;
 }
 #endif
@@ -64,13 +187,13 @@ int board_early_init_f(void)
 
 int board_init(void)
 {
+ 
 	/* address of boot parameters */
 	gd->bd->bi_boot_params = CONFIG_SYS_SDRAM_BASE + 0x100;
 
 #ifdef CONFIG_CMD_USB
 	board_usb_hw_init();
 #endif
-
 	return 0;
 }
 
@@ -188,5 +311,7 @@ void at91_pmc_init(void)
 	      AT91_PMC_MCKR_MDIV_3 |
 	      AT91_PMC_MCKR_CSS_PLLA;
 	at91_mck_init(tmp);
+  
+
 }
 #endif

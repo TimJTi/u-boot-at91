@@ -22,7 +22,7 @@ DECLARE_GLOBAL_DATA_PTR;
 int at91_video_show_board_info(void)
 {
 	struct vidconsole_priv *priv;
-	ulong dram_size, nand_size;
+	ulong dram_size;
 	int i;
 	u32 len = 0;
 	char buf[255];
@@ -46,15 +46,17 @@ int at91_video_show_board_info(void)
 	dram_size = 0;
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++)
 		dram_size += gd->bd->bi_dram[i].size;
+	len += sprintf(&buf[len], "%ld MB SDRAM", dram_size >> 20);
 
-	nand_size = 0;
 #ifdef CONFIG_NAND_ATMEL
-	for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++)
+	ulong nand_size = 0;
+  for (i = 0; i < CONFIG_SYS_MAX_NAND_DEVICE; i++)
 		nand_size += get_nand_dev_by_index(i)->size;
-#endif
-
-	len += sprintf(&buf[len], "%ld MB SDRAM, %ld MB NAND\n",
+	len += sprintf(&buf[len], ", %ld MB NAND\n",
 		       dram_size >> 20, nand_size >> 20);
+#else
+  len += sprintf(&buf[len], "\n");
+#endif
 
 	ret = uclass_get_device(UCLASS_VIDEO, 0, &dev);
 	if (ret)
