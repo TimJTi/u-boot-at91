@@ -198,8 +198,6 @@ config TARGET_SAMA5D27_T2
 	select BOARD_EARLY_INIT_F
 	select BOARD_LATE_INIT
 	select CPU_V7A
-	select SUPPORT_SPL
-	select ATMEL_SFR
 	help
     The SAMA5D27 T2 board uses a SAMA5D27-D5M processor,
     a 1Gbit QSPI flash, 256k SPI flash, 128kbit SPI EEPROM,
@@ -348,7 +346,7 @@ source "board/atmel/sam9x60ek/Kconfig"
 source "board/atmel/sama5d2_ptc_ek/Kconfig"
 source "board/atmel/sama5d2_xplained/Kconfig"
 source "board/atmel/sama5d27_som1_ek/Kconfig"
-source "board/atmel/sama5d27_t2/Kconfig"
+source "board/jtinnovations/sama5d27_t2/Kconfig"
 source "board/atmel/sama5d27_wlsom1_ek/Kconfig"
 source "board/atmel/sama5d2_icp/Kconfig"
 source "board/atmel/sama5d3_xplained/Kconfig"
