@@ -1,8 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0+
+/* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2017 Microchip Corporation
- *		      Wenyou.Yang <wenyou.yang@microchip.com>
- */
+ * Configuration file for the SAMA5D27 T2 Board.
+ *
+ * Copyright (C) 2021 JT Innovations Ltd
+ *		      Tim Hardisty <timh@jti.uk.com>
+*/
 
 #include <common.h>
 #include <debug_uart.h>

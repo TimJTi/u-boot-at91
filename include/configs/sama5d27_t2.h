@@ -4,7 +4,7 @@
  *
  * Copyright (C) 2021 JT Innovations Ltd
  *		      Tim Hardisty <timh@jti.uk.com>
- */
+*/
 
 #ifndef __CONFIG_H
 #define __CONFIG_H
@@ -42,14 +42,6 @@
 #undef CONFIG_BOOTARGS
 
 
-/* SPL */
-/*
-#define CONFIG_SPL_MAX_SIZE		0x10000
-#define CONFIG_SPL_BSS_START_ADDR	0x20000000
-#define CONFIG_SPL_BSS_MAX_SIZE		0x80000
-#define CONFIG_SYS_SPL_MALLOC_START	0x20080000
-#define CONFIG_SYS_SPL_MALLOC_SIZE	0x80000
-*/
 #define CONFIG_SYS_MONITOR_LEN		(512 << 10)
 
 #ifdef CONFIG_SD_BOOT
@@ -59,20 +51,5 @@
 
 #define CONFIG_CMD_BMP
 
-
-#ifdef CONFIG_QSPI_BOOT
-#undef CONFIG_BOOTCOMMAND
-/*
-#define CONFIG_BOOTCOMMAND		\
-  "echo Trying to load from flash...; "	\
-  "lcdputs loading... ; " \
-  "sf probe 1:0; " \
-  "sf read 0x20008000 0xC0000 0x200000; "	\
-  "cls;" \
-  "go 0x20008000"
-*/
-
-
-#endif
 
 #endif
