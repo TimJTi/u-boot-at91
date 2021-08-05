@@ -1,20 +1,20 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Copyright (C) 2017 Microchip
- *		 Wenyou.Yang <wenyou.yang@microchip.com>
+ * Copyright (C) 2021 JT Innovations
+ *		 Tim Hardisty <timh@jtinnovations.uk.com>
  */
 
-#ifndef __MICROCHIP_LOGO_8BPP_H__
-#define __MICROCHIP_LOGO_8BPP_H__
+#ifndef __JTINNOVATIONS_LOGO_8BPP_H__
+#define __JTINNOVATIONS_LOGO_8BPP_H__
 
-#define MICROCHIP_LOGO_8BPP_WIDTH	260
-#define MICROCHIP_LOGO_8BPP_HEIGHT	130
+#define JTINNOVATIONS_LOGO_8BPP_WIDTH	260
+#define JTINNOVATIONS_LOGO_8BPP_HEIGHT	130
 
-#define MICROCHIP_LOGO_8BPP_X_OFFSET	0
+#define JTINNOVATIONS_LOGO_8BPP_X_OFFSET	0
 #define MCIROCHIP_LOGO_8BPP_Y_OFFSET	0
 
 /* Format: BMP 8BPP 240*60 */
-unsigned char microchip_logo_8bpp[] = {
+unsigned char jtinnovations_logo_8bpp[] = {
 0x42,  0x4D,  0xB6,  0x74,  0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x36,  0x04,  0x00,  0x00,  0x28,   0x00, 
 0x00,  0x00,  0xF0,  0x00,  0x00,  0x00,  0x78,  0x00,  0x00,  0x00,  0x01,  0x00,  0x08,  0x00,  0x00,   0x00, 
 0x00,  0x00,  0x00,  0x00,  0x00,  0x00,  0x23,  0x2E,  0x00,  0x00,  0x23,  0x2E,  0x00,  0x00,  0x00,   0x00, 

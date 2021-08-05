@@ -4,7 +4,7 @@ config SYS_BOARD
 	default "sama5d27_t2"
 
 config SYS_VENDOR
-	default "atmel"
+	default "JTinnovations"
 
 config SYS_SOC
 	default "at91"
