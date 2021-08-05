@@ -19,6 +19,15 @@
 #include <asm/arch/gpio.h>
 #include <asm/arch/sama5d2.h>
 
+#include <atmel_lcd.h>
+#include <dm.h>
+#include <version.h>
+#include <video.h>
+#include <video_console.h>
+#include <vsprintf.h>
+#include "jti_logo_8bpp.h"
+
+void jtinnovations_logo_info(vidinfo_t *info);  
 
 #if defined(CONFIG_ARCH_MISC_INIT)
 int arch_misc_init(void)
@@ -315,3 +324,70 @@ void at91_pmc_init(void)
 
 }
 #endif
+
+#ifdef CONFIG_DM_VIDEO
+
+int at91_video_show_board_info(void)
+{
+	struct vidconsole_priv *priv;
+	ulong dram_size;
+	int i;
+	u32 len = 0;
+	char buf[255];
+	char *corp = "JT Innovations Ltd.\n";
+	char temp[32];
+	struct udevice *dev, *con;
+	const char *s;
+	vidinfo_t logo_info;
+	int ret;
+
+	len += sprintf(&buf[len], "%s\n", U_BOOT_VERSION);
+	memcpy(&buf[len], corp, strlen(corp));
+	len += strlen(corp);
+	len += sprintf(&buf[len], "%s CPU at %s MHz\n", get_cpu_name(),
+			strmhz(temp, get_cpu_clk_rate()));
+
+	dram_size = 0;
+	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++)
+		dram_size += gd->bd->bi_dram[i].size;
+	len += sprintf(&buf[len], "%ld MB SDRAM\n", dram_size >> 20);
+
+	ret = uclass_get_device(UCLASS_VIDEO, 0, &dev);
+	if (ret)
+		return ret;
+
+	jtinnovations_logo_info(&logo_info);
+	ret = video_bmp_display(dev, logo_info.logo_addr,
+				logo_info.logo_x_offset,
+				logo_info.logo_y_offset, false);
+	if (ret)
+		return ret;
+
+	ret = uclass_get_device(UCLASS_VIDEO_CONSOLE, 0, &con);
+	if (ret)
+		return ret;
+
+	priv = dev_get_uclass_priv(con);
+	vidconsole_position_cursor(con, 0, (logo_info.logo_height +
+				   priv->y_charsize - 1) / priv->y_charsize);
+	for (s = buf, i = 0; i < len; s++, i++)
+		vidconsole_put_char(con, *s);
+
+	return 0;
+}
+
+void jtinnovations_logo_info(vidinfo_t *info)
+{
+	info->logo_width = JTINNOVATIONS_LOGO_8BPP_WIDTH;
+	info->logo_height = JTINNOVATIONS_LOGO_8BPP_HEIGHT;
+	info->logo_x_offset = JTINNOVATIONS_LOGO_8BPP_X_OFFSET;
+	info->logo_y_offset = JTINNOVATIONS_LOGO_8BPP_X_OFFSET;
+	info->logo_addr = (u_long)jtinnovations_logo_8bpp;
+}
+#endif
+
+void at91_prepare_cpu_var(void)
+{
+	env_set("cpu", get_cpu_name());
+}
+
