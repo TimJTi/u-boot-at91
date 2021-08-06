@@ -10,6 +10,8 @@
 #include <debug_uart.h>
 #include <dm.h>
 #include <i2c.h>
+#include <spi.h>
+#include <spi_flash.h>
 #include <init.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
@@ -28,6 +30,7 @@
 #include <video_console.h>
 #include <vsprintf.h>
 #include "jti_logo_8bpp.h"
+
 
 void jtinnovations_logo_info(vidinfo_t *info);  
 
@@ -339,9 +342,13 @@ int at91_video_show_board_info(void)
 	char *corp = "JT Innovations Ltd.\n";
 	char temp[32];
 	struct udevice *dev, *con;
+  struct spi_flash *flash;
 	const char *s;
 	vidinfo_t logo_info;
 	int ret;
+	
+  
+  //flash=(struct spi_flash *)malloc(1 * sizeof(struct spi_flash));
 
 	len += sprintf(&buf[len], "%s\n", U_BOOT_VERSION);
 	memcpy(&buf[len], corp, strlen(corp));
@@ -352,7 +359,17 @@ int at91_video_show_board_info(void)
 	dram_size = 0;
 	for (i = 0; i < CONFIG_NR_DRAM_BANKS; i++)
 		dram_size += gd->bd->bi_dram[i].size;
-	len += sprintf(&buf[len], "%ld MB SDRAM\n", dram_size >> 20);
+	len += sprintf(&buf[len], "%ld MiB SDRAM", dram_size >> 20);
+  
+  flash = spi_flash_probe(1, 0, 1000000, SPI_MODE_0);
+  if (flash)  {
+    len += sprintf(&buf[len], ", %dMiB program memory", flash->size >> 20);
+  }
+  flash = spi_flash_probe(0, 1, 50000000, SPI_MODE_0);
+  if (flash)  {
+    len += sprintf(&buf[len], ", %dMiB log memory", flash->size >> 20);
+  }
+  len += sprintf(&buf[len], "\n");
 
 	ret = uclass_get_device(UCLASS_VIDEO, 0, &dev);
 	if (ret)
