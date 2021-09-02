@@ -92,3 +92,4 @@ GTAGS
 *.orig
 *~
 \#*#
+configs/sama5d27_t2_defconfig_works
