@@ -13,6 +13,9 @@
 #include <command.h>
 #include <env.h>
 #include <env_internal.h>
+#include <flash.h>
+#include <log.h>
+#include <asm/global_data.h>
 #include <linux/stddef.h>
 #include <malloc.h>
 #include <search.h>
@@ -349,7 +352,7 @@ static int env_flash_load(void)
 		     "reading environment; recovered successfully\n\n");
 #endif /* CONFIG_ENV_ADDR_REDUND */
 
-	return env_import((char *)flash_addr, 1);
+	return env_import((char *)flash_addr, 1, H_EXTERNAL);
 }
 #endif /* LOADENV */
 

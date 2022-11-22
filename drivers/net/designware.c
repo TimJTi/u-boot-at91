@@ -13,11 +13,17 @@
 #include <cpu_func.h>
 #include <dm.h>
 #include <errno.h>
+#include <log.h>
 #include <miiphy.h>
 #include <malloc.h>
+#include <net.h>
 #include <pci.h>
 #include <reset.h>
+#include <asm/cache.h>
+#include <dm/device_compat.h>
+#include <dm/devres.h>
 #include <linux/compiler.h>
+#include <linux/delay.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <asm/io.h>
@@ -82,12 +88,12 @@ static int dw_mdio_write(struct mii_dev *bus, int addr, int devad, int reg,
 	return ret;
 }
 
-#if defined(CONFIG_DM_ETH) && defined(CONFIG_DM_GPIO)
+#if defined(CONFIG_DM_ETH) && CONFIG_IS_ENABLED(DM_GPIO)
 static int dw_mdio_reset(struct mii_dev *bus)
 {
 	struct udevice *dev = bus->priv;
 	struct dw_eth_dev *priv = dev_get_priv(dev);
-	struct dw_eth_pdata *pdata = dev_get_platdata(dev);
+	struct dw_eth_pdata *pdata = dev_get_plat(dev);
 	int ret;
 
 	if (!dm_gpio_is_valid(&priv->reset_gpio))
@@ -128,7 +134,7 @@ static int dw_mdio_init(const char *name, void *priv)
 	bus->read = dw_mdio_read;
 	bus->write = dw_mdio_write;
 	snprintf(bus->name, sizeof(bus->name), "%s", name);
-#if defined(CONFIG_DM_ETH) && defined(CONFIG_DM_GPIO)
+#if defined(CONFIG_DM_ETH) && CONFIG_IS_ENABLED(DM_GPIO)
 	bus->reset = dw_mdio_reset;
 #endif
 
@@ -506,7 +512,7 @@ static int dw_phy_init(struct dw_eth_dev *priv, void *dev)
 }
 
 #ifndef CONFIG_DM_ETH
-static int dw_eth_init(struct eth_device *dev, bd_t *bis)
+static int dw_eth_init(struct eth_device *dev, struct bd_info *bis)
 {
 	int ret;
 
@@ -604,7 +610,7 @@ int designware_initialize(ulong base_addr, u32 interface)
 #ifdef CONFIG_DM_ETH
 static int designware_eth_start(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_platdata(dev);
+	struct eth_pdata *pdata = dev_get_plat(dev);
 	struct dw_eth_dev *priv = dev_get_priv(dev);
 	int ret;
 
@@ -648,7 +654,7 @@ void designware_eth_stop(struct udevice *dev)
 
 int designware_eth_write_hwaddr(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_platdata(dev);
+	struct eth_pdata *pdata = dev_get_plat(dev);
 	struct dw_eth_dev *priv = dev_get_priv(dev);
 
 	return _dw_write_hwaddr(priv, pdata->enetaddr);
@@ -672,7 +678,7 @@ static int designware_eth_bind(struct udevice *dev)
 
 int designware_eth_probe(struct udevice *dev)
 {
-	struct eth_pdata *pdata = dev_get_platdata(dev);
+	struct eth_pdata *pdata = dev_get_plat(dev);
 	struct dw_eth_dev *priv = dev_get_priv(dev);
 	u32 iobase = pdata->iobase;
 	ulong ioaddr;
@@ -682,7 +688,8 @@ int designware_eth_probe(struct udevice *dev)
 	int i, clock_nb;
 
 	priv->clock_count = 0;
-	clock_nb = dev_count_phandle_with_args(dev, "clocks", "#clock-cells");
+	clock_nb = dev_count_phandle_with_args(dev, "clocks", "#clock-cells",
+					       0);
 	if (clock_nb > 0) {
 		priv->clocks = devm_kcalloc(dev, clock_nb, sizeof(struct clk),
 					    GFP_KERNEL);
@@ -733,7 +740,7 @@ int designware_eth_probe(struct udevice *dev)
 #ifdef CONFIG_DM_PCI
 	/*
 	 * If we are on PCI bus, either directly attached to a PCI root port,
-	 * or via a PCI bridge, fill in platdata before we probe the hardware.
+	 * or via a PCI bridge, fill in plat before we probe the hardware.
 	 */
 	if (device_is_on_pci_bus(dev)) {
 		dm_pci_read_config32(dev, PCI_BASE_ADDRESS_0, &iobase);
@@ -804,15 +811,15 @@ const struct eth_ops designware_eth_ops = {
 	.write_hwaddr		= designware_eth_write_hwaddr,
 };
 
-int designware_eth_ofdata_to_platdata(struct udevice *dev)
+int designware_eth_of_to_plat(struct udevice *dev)
 {
-	struct dw_eth_pdata *dw_pdata = dev_get_platdata(dev);
-#ifdef CONFIG_DM_GPIO
+	struct dw_eth_pdata *dw_pdata = dev_get_plat(dev);
+#if CONFIG_IS_ENABLED(DM_GPIO)
 	struct dw_eth_dev *priv = dev_get_priv(dev);
 #endif
 	struct eth_pdata *pdata = &dw_pdata->eth_pdata;
 	const char *phy_mode;
-#ifdef CONFIG_DM_GPIO
+#if CONFIG_IS_ENABLED(DM_GPIO)
 	int reset_flags = GPIOD_IS_OUT;
 #endif
 	int ret = 0;
@@ -829,7 +836,7 @@ int designware_eth_ofdata_to_platdata(struct udevice *dev)
 
 	pdata->max_speed = dev_read_u32_default(dev, "max-speed", 0);
 
-#ifdef CONFIG_DM_GPIO
+#if CONFIG_IS_ENABLED(DM_GPIO)
 	if (dev_read_bool(dev, "snps,reset-active-low"))
 		reset_flags |= GPIOD_ACTIVE_LOW;
 
@@ -861,13 +868,13 @@ U_BOOT_DRIVER(eth_designware) = {
 	.name	= "eth_designware",
 	.id	= UCLASS_ETH,
 	.of_match = designware_eth_ids,
-	.ofdata_to_platdata = designware_eth_ofdata_to_platdata,
+	.of_to_plat = designware_eth_of_to_plat,
 	.bind	= designware_eth_bind,
 	.probe	= designware_eth_probe,
 	.remove	= designware_eth_remove,
 	.ops	= &designware_eth_ops,
-	.priv_auto_alloc_size = sizeof(struct dw_eth_dev),
-	.platdata_auto_alloc_size = sizeof(struct dw_eth_pdata),
+	.priv_auto	= sizeof(struct dw_eth_dev),
+	.plat_auto	= sizeof(struct dw_eth_pdata),
 	.flags = DM_FLAG_ALLOC_PRIV_DMA,
 };
 

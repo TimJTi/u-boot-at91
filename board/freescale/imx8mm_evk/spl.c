@@ -4,7 +4,14 @@
  */
 
 #include <common.h>
+#include <command.h>
+#include <cpu_func.h>
+#include <hang.h>
+#include <image.h>
+#include <init.h>
+#include <log.h>
 #include <spl.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/mach-imx/iomux-v3.h>
 #include <asm/arch/clock.h>
@@ -37,7 +44,7 @@ int spl_board_boot_device(enum boot_device boot_dev_spl)
 	}
 }
 
-void spl_dram_init(void)
+static void spl_dram_init(void)
 {
 	ddr_init(&dram_timing);
 }
@@ -82,7 +89,7 @@ int board_early_init_f(void)
 	return 0;
 }
 
-int power_init_board(void)
+static int power_init_board(void)
 {
 	struct udevice *dev;
 	int ret;
@@ -158,13 +165,4 @@ void board_init_f(ulong dummy)
 	spl_dram_init();
 
 	board_init_r(NULL, 0);
-}
-
-int do_reset(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
-{
-	puts ("resetting ...\n");
-
-	reset_cpu(WDOG1_BASE_ADDR);
-
-	return 0;
 }

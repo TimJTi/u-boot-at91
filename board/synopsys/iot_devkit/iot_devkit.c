@@ -4,8 +4,12 @@
  */
 
 #include <common.h>
+#include <cpu_func.h>
+#include <init.h>
 #include <malloc.h>
 #include <dwmmc.h>
+#include <asm/global_data.h>
+#include <linux/bitops.h>
 #include <linux/libfdt.h>
 #include <fdtdec.h>
 

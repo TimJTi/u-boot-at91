@@ -8,10 +8,13 @@
 #include <common.h>
 #include <clk.h>
 #include <dm.h>
+#include <hang.h>
+#include <log.h>
 #include <ram.h>
 #include <asm/io.h>
 #include <power-domain.h>
 #include <wait_bit.h>
+#include <dm/device_compat.h>
 
 #include "lpddr4_obj_if.h"
 #include "lpddr4_if.h"
@@ -368,5 +371,5 @@ U_BOOT_DRIVER(j721e_ddrss) = {
 	.of_match = j721e_ddrss_ids,
 	.ops = &j721e_ddrss_ops,
 	.probe = j721e_ddrss_probe,
-	.priv_auto_alloc_size = sizeof(struct j721e_ddrss_desc),
+	.priv_auto	= sizeof(struct j721e_ddrss_desc),
 };

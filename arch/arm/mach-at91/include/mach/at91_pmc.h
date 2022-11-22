@@ -25,6 +25,7 @@
 #else
 
 #include <asm/types.h>
+#include <linux/bitops.h>
 
 #if defined(CONFIG_SAM9X60)
 typedef struct at91_pmc {

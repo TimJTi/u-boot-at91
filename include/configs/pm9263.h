@@ -5,7 +5,7 @@
  * Lead Tech Design <www.leadtechdesign.com>
  * Ilko Iliev <www.ronetix.at>
  *
- * Configuation settings for the RONETIX PM9263 board.
+ * Configuration settings for the RONETIX PM9263 board.
  */
 
 #ifndef __CONFIG_H
@@ -190,7 +190,6 @@
 
 #endif
 
-#define CONFIG_JFFS2_CMDLINE		1
 #define CONFIG_JFFS2_NAND		1
 #define CONFIG_JFFS2_DEV		"nand0" /* NAND device jffs2 lives on */
 #define CONFIG_JFFS2_PART_OFFSET	0	/* start of jffs2 partition */
@@ -205,12 +204,6 @@
 					 AT91_MATRIX_SCFG_DEFMSTR_TYPE_FIXED	| \
 					 AT91_MATRIX_SCFG_SLOT_CYCLE(255))
 
-/* Ethernet */
-#define CONFIG_MACB			1
-#define CONFIG_RMII			1
-#define CONFIG_NET_RETRY_COUNT		20
-#define CONFIG_RESET_PHY_R		1
-
 /* USB */
 #define CONFIG_USB_ATMEL
 #define CONFIG_USB_ATMEL_CLK_SEL_PLLB
@@ -221,9 +214,6 @@
 #define CONFIG_SYS_USB_OHCI_MAX_ROOT_PORTS	2
 
 #define CONFIG_SYS_LOAD_ADDR			0x22000000	/* load address */
-
-#define CONFIG_SYS_MEMTEST_START		PHYS_SDRAM
-#define CONFIG_SYS_MEMTEST_END			0x23e00000
 
 #define CONFIG_SYS_USE_FLASH	1
 #undef CONFIG_SYS_USE_DATAFLASH
@@ -242,9 +232,6 @@
 #define CONFIG_BOOTCOMMAND	"nand read 0x22000000 0xA0000 0x200000; bootm"
 
 #elif defined(CONFIG_SYS_USE_FLASH) /* CFG_USE_FLASH */
-
-#define CONFIG_ENV_OVERWRITE	1
-
 /* JFFS Partition offset set */
 #define CONFIG_SYS_JFFS2_FIRST_BANK	0
 #define CONFIG_SYS_JFFS2_NUM_BANKS	1

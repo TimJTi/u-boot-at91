@@ -6,6 +6,7 @@
 
 #include <common.h>
 #include <init.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/at91_rstc.h>
@@ -221,7 +222,7 @@ void at91_pmc_init(void)
 #endif
 
 #if defined(CONFIG_OF_BOARD_SETUP)
-int ft_board_setup(void *fdt, bd_t *bd)
+int ft_board_setup(void *fdt, struct bd_info *bd)
 {
 	static const char * const wilc_compatibles[] = {
 		"microchip,wilc1000", "microchip,wilc3000", "atmel,wilc_sdio",
