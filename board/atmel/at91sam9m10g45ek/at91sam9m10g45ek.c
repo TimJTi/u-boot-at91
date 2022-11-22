@@ -7,7 +7,10 @@
 
 #include <common.h>
 #include <debug_uart.h>
+#include <init.h>
+#include <net.h>
 #include <vsprintf.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/at91sam9g45_matrix.h>
@@ -254,9 +257,6 @@ void board_debug_uart_init(void)
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
-#ifdef CONFIG_DEBUG_UART
-	debug_uart_init();
-#endif
 	return 0;
 }
 #endif

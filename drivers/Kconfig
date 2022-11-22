@@ -10,9 +10,13 @@ source "drivers/ata/Kconfig"
 
 source "drivers/axi/Kconfig"
 
+source "drivers/bus/Kconfig"
+
 source "drivers/block/Kconfig"
 
 source "drivers/bootcount/Kconfig"
+
+source "drivers/button/Kconfig"
 
 source "drivers/cache/Kconfig"
 
@@ -25,8 +29,6 @@ source "drivers/crypto/Kconfig"
 source "drivers/ddr/Kconfig"
 
 source "drivers/demo/Kconfig"
-
-source "drivers/board/Kconfig"
 
 source "drivers/ddr/fsl/Kconfig"
 
@@ -48,17 +50,23 @@ source "drivers/i2c/Kconfig"
 
 source "drivers/input/Kconfig"
 
+source "drivers/iommu/Kconfig"
+
 source "drivers/led/Kconfig"
 
 source "drivers/mailbox/Kconfig"
 
 source "drivers/memory/Kconfig"
 
+source "drivers/mfd/Kconfig"
+
 source "drivers/misc/Kconfig"
 
 source "drivers/mmc/Kconfig"
 
 source "drivers/mtd/Kconfig"
+
+source "drivers/mux/Kconfig"
 
 source "drivers/net/Kconfig"
 
@@ -76,6 +84,8 @@ source "drivers/phy/allwinner/Kconfig"
 
 source "drivers/phy/marvell/Kconfig"
 
+source "drivers/phy/socionext/Kconfig"
+
 source "drivers/pinctrl/Kconfig"
 
 source "drivers/power/Kconfig"
@@ -86,9 +96,13 @@ source "drivers/qe/Kconfig"
 
 source "drivers/ram/Kconfig"
 
+source "drivers/reboot-mode/Kconfig"
+
 source "drivers/remoteproc/Kconfig"
 
 source "drivers/reset/Kconfig"
+
+source "drivers/rng/Kconfig"
 
 source "drivers/rtc/Kconfig"
 
@@ -105,6 +119,8 @@ source "drivers/soc/Kconfig"
 source "drivers/spi/Kconfig"
 
 source "drivers/spmi/Kconfig"
+
+source "drivers/sysinfo/Kconfig"
 
 source "drivers/sysreset/Kconfig"
 
@@ -129,6 +145,8 @@ source "drivers/w1/Kconfig"
 source "drivers/w1-eeprom/Kconfig"
 
 source "drivers/watchdog/Kconfig"
+
+source "drivers/xen/Kconfig"
 
 config PHYS_TO_BUS
 	bool "Custom physical to bus address mapping"

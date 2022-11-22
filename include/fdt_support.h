@@ -7,9 +7,24 @@
 #ifndef __FDT_SUPPORT_H
 #define __FDT_SUPPORT_H
 
-#ifdef CONFIG_OF_LIBFDT
+#if defined(CONFIG_OF_LIBFDT) && !defined(USE_HOSTCC)
 
+#include <asm/u-boot.h>
 #include <linux/libfdt.h>
+
+/**
+ * arch_fixup_fdt() - Write arch-specific information to fdt
+ *
+ * Defined in arch/$(ARCH)/lib/bootm-fdt.c
+ *
+ * @blob:	FDT blob to write to
+ * @return 0 if ok, or -ve FDT_ERR_... on failure
+ */
+int arch_fixup_fdt(void *blob);
+
+void ft_cpu_setup(void *blob, struct bd_info *bd);
+
+void ft_pci_setup(void *blob, struct bd_info *bd);
 
 u32 fdt_getprop_u32_default_node(const void *fdt, int off, int cell,
 				const char *prop, const u32 dflt);
@@ -122,9 +137,9 @@ void fdt_fixup_qe_firmware(void *fdt);
 int fdt_fixup_display(void *blob, const char *path, const char *display);
 
 #if defined(CONFIG_USB_EHCI_FSL) || defined(CONFIG_USB_XHCI_FSL)
-void fsl_fdt_fixup_dr_usb(void *blob, bd_t *bd);
+void fsl_fdt_fixup_dr_usb(void *blob, struct bd_info *bd);
 #else
-static inline void fsl_fdt_fixup_dr_usb(void *blob, bd_t *bd) {}
+static inline void fsl_fdt_fixup_dr_usb(void *blob, struct bd_info *bd) {}
 #endif /* defined(CONFIG_USB_EHCI_FSL) || defined(CONFIG_USB_XHCI_FSL) */
 
 #if defined(CONFIG_SYS_FSL_SEC_COMPAT)
@@ -145,11 +160,12 @@ static inline void fdt_fixup_crypto_node(void *blob, int sec_rev) {}
  * @param entry_point   entry point (if specified, otherwise pass -1)
  * @param type          type (if specified, otherwise pass NULL)
  * @param os            os-type (if specified, otherwise pass NULL)
+ * @param arch		architecture (if specified, otherwise pass NULL)
  * @return 0 if ok, or -1 or -FDT_ERR_... on error
  */
 int fdt_record_loadable(void *blob, u32 index, const char *name,
 			uintptr_t load_addr, u32 size, uintptr_t entry_point,
-			const char *type, const char *os);
+			const char *type, const char *os, const char *arch);
 
 #ifdef CONFIG_PCI
 #include <pci.h>
@@ -165,10 +181,20 @@ int fdt_find_or_add_subnode(void *fdt, int parentoffset, const char *name);
  * This function is called if CONFIG_OF_BOARD_SETUP is defined
  *
  * @param blob		FDT blob to update
- * @param bd_t		Pointer to board data
+ * @param bd		Pointer to board data
  * @return 0 if ok, or -FDT_ERR_... on error
  */
-int ft_board_setup(void *blob, bd_t *bd);
+int ft_board_setup(void *blob, struct bd_info *bd);
+
+/**
+ * board_fdt_chosen_bootargs() - Arbitrarily amend fdt kernel command line
+ *
+ * This is used for late modification of kernel command line arguments just
+ * before they are added into the /chosen node in flat device tree.
+ *
+ * @return: pointer to kernel command line arguments in memory
+ */
+char *board_fdt_chosen_bootargs(void);
 
 /*
  * The keystone2 SOC requires all 32 bit aliased addresses to be converted
@@ -176,9 +202,7 @@ int ft_board_setup(void *blob, bd_t *bd);
  * are added or modified by the image_setup_libfdt(). The ft_board_setup_ex()
  * called at the end of the image_setup_libfdt() is to do that convertion.
  */
-void ft_board_setup_ex(void *blob, bd_t *bd);
-void ft_cpu_setup(void *blob, bd_t *bd);
-void ft_pci_setup(void *blob, bd_t *bd);
+void ft_board_setup_ex(void *blob, struct bd_info *bd);
 
 /**
  * Add system-specific data to the FDT before booting the OS.
@@ -187,10 +211,10 @@ void ft_pci_setup(void *blob, bd_t *bd);
  * This function is called if CONFIG_OF_SYSTEM_SETUP is defined
  *
  * @param blob		FDT blob to update
- * @param bd_t		Pointer to board data
+ * @param bd		Pointer to board data
  * @return 0 if ok, or -FDT_ERR_... on error
  */
-int ft_system_setup(void *blob, bd_t *bd);
+int ft_system_setup(void *blob, struct bd_info *bd);
 
 void set_working_fdt_addr(ulong addr);
 
@@ -244,6 +268,20 @@ u64 fdt_translate_address(const void *blob, int node_offset,
  */
 u64 fdt_translate_dma_address(const void *blob, int node_offset,
 			      const __be32 *in_addr);
+
+/**
+ * Get DMA ranges for a specifc node, this is useful to perform bus->cpu and
+ * cpu->bus address translations
+ *
+ * @param blob		Pointer to device tree blob
+ * @param node_offset	Node DT offset
+ * @param cpu		Pointer to variable storing the range's cpu address
+ * @param bus		Pointer to variable storing the range's bus address
+ * @param size		Pointer to variable storing the range's size
+ * @return translated DMA address or OF_BAD_ADDR on error
+ */
+int fdt_get_dma_range(const void *blob, int node_offset, phys_addr_t *cpu,
+		      dma_addr_t *bus, u64 *size);
 
 int fdt_node_offset_by_compat_reg(void *blob, const char *compat,
 					phys_addr_t compat_off);
@@ -313,6 +351,8 @@ int fdt_setup_simplefb_node(void *fdt, int node, u64 base_address, u32 width,
 
 int fdt_overlay_apply_verbose(void *fdt, void *fdto);
 
+int fdt_valid(struct fdt_header **blobp);
+
 /**
  * fdt_get_cells_len() - Get the length of a type of cell in top-level nodes
  *
@@ -328,11 +368,23 @@ int fdt_get_cells_len(const void *blob, char *nr_cells_name);
 #ifdef USE_HOSTCC
 int fdtdec_get_int(const void *blob, int node, const char *prop_name,
 		int default_val);
+
+/*
+ * Count child nodes of one parent node.
+ *
+ * @param blob	FDT blob
+ * @param node	parent node
+ * @return number of child node; 0 if there is not child node
+ */
+int fdtdec_get_child_count(const void *blob, int node);
 #endif
 #ifdef CONFIG_FMAN_ENET
 int fdt_update_ethernet_dt(void *blob);
 #endif
 #ifdef CONFIG_FSL_MC_ENET
 void fdt_fixup_board_enet(void *blob);
+#endif
+#ifdef CONFIG_CMD_PSTORE
+void fdt_fixup_pstore(void *blob);
 #endif
 #endif /* ifndef __FDT_SUPPORT_H */

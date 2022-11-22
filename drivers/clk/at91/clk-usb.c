@@ -1,145 +1,218 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Copyright (C) 2018 Microhip / Atmel Corporation
- *               Wenyou.Yang <wenyou.yang@microchip.com>
+ * SAM9X5 USB clock support for AT91 architectures.
+ *
+ * Copyright (C) 2020 Microchip Technology Inc. and its subsidiaries
+ *
+ * Author: Claudiu Beznea <claudiu.beznea@microchip.com>
+ *
+ * Based on drivers/clk/at91/clk-usb.c from Linux.
  */
 
-#include <common.h>
-#include <clk-uclass.h>
-#include <dm/device.h>
-#include <linux/io.h>
-#include <mach/at91_pmc.h>
+#include <linux/clk-provider.h>
+#include <linux/clk/at91_pmc.h>
+#include <dm.h>
+
 #include "pmc.h"
 
-DECLARE_GLOBAL_DATA_PTR;
+#define UBOOT_DM_CLK_AT91_SAM9X5_USB	"at91-sam9x5-usb-clk"
+#define UBOOT_DM_CLK_AT91_SAM9N12_USB	"at91-sam9n12-usb-clk"
 
-#define AT91_USB_CLK_SOURCE_MAX	2
-#define AT91_USB_CLK_MAX_DIV	15
+#define SAM9X5_USB_DIV_SHIFT	8
+#define SAM9X5_USB_MAX_DIV	0xf
 
-struct at91_usb_clk_priv {
-	u32 num_clksource;
+#define RM9200_USB_DIV_SHIFT	28
+#define RM9200_USB_DIV_TAB_SIZE	4
+
+#define SAM9X5_USBS_MASK	GENMASK(0, 0)
+#define SAM9X60_USBS_MASK	GENMASK(1, 0)
+
+struct at91sam9x5_clk_usb {
+	void __iomem *base;
+	u32 *clk_mux_table;
+	struct clk clk;
+	u32 usbs_mask;
+	u8 num_parents;
 };
 
-static ulong at91_usb_clk_get_rate(struct clk *clk)
+#define to_at91sam9x5_clk_usb(clk) \
+	container_of(clk, struct at91sam9x5_clk_usb, clk)
+
+static ulong at91sam9x5_clk_usb_get_rate(struct clk *clk)
 {
-	struct pmc_platdata *plat = dev_get_platdata(clk->dev);
-	struct at91_pmc *pmc = plat->reg_base;
-	struct clk source;
-	u32 tmp, usbdiv;
-	u8 source_index;
-	int ret;
+	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(clk);
+	ulong parent_rate = clk_get_parent_rate(clk);
+	u32 tmp;
 
-	tmp = readl(&pmc->pcr);
-	source_index = (tmp >> AT91_PMC_USB_USBS_OFFSET) &
-			AT91_PMC_USB_USBS_MASK;
-	usbdiv = (tmp >> AT91_PMC_USB_DIV_OFFSET) & AT91_PMC_USB_DIV_MASK;
-
-	ret = clk_get_by_index(clk->dev, source_index, &source);
-	if (ret)
+	if (!parent_rate)
 		return 0;
 
-	return clk_get_rate(&source) / (usbdiv + 1);
+	pmc_read(usb->base, AT91_PMC_USB, &tmp);
+	tmp = (tmp & AT91_PMC_OHCIUSBDIV) >> SAM9X5_USB_DIV_SHIFT;
+
+	return DIV_ROUND_CLOSEST(parent_rate, tmp + 1);
 }
 
-static ulong at91_usb_clk_set_rate(struct clk *clk, ulong rate)
+static int at91sam9x5_clk_usb_set_parent(struct clk *clk, struct clk *parent)
 {
-	struct pmc_platdata *plat = dev_get_platdata(clk->dev);
-	struct at91_pmc *pmc = plat->reg_base;
-	struct at91_usb_clk_priv *priv = dev_get_priv(clk->dev);
-	struct clk source, best_source;
-	ulong tmp_rate, best_rate = rate, source_rate;
-	int tmp_diff, best_diff = -1;
-	u32 div, best_div = 0;
-	u8 best_source_index = 0;
-	u8 i;
+	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(clk);
+	int index;
+
+	index = at91_clk_mux_val_to_index(usb->clk_mux_table, usb->num_parents,
+					  parent->id);
+	if (index < 0)
+		return index;
+
+	pmc_update_bits(usb->base, AT91_PMC_USB, usb->usbs_mask, index);
+
+	return 0;
+}
+
+static ulong at91sam9x5_clk_usb_set_rate(struct clk *clk, ulong rate)
+{
+	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(clk);
+	ulong parent_rate = clk_get_parent_rate(clk);
+	unsigned long div;
+
+	if (!rate || !parent_rate)
+		return 0;
+
+	div = DIV_ROUND_CLOSEST(parent_rate, rate);
+	if (div > SAM9X5_USB_MAX_DIV + 1 || !div)
+		return 0;
+
+	pmc_update_bits(usb->base, AT91_PMC_USB, AT91_PMC_OHCIUSBDIV,
+			(div - 1) << SAM9X5_USB_DIV_SHIFT);
+
+	return 0;
+}
+
+static const struct clk_ops at91sam9x5_usb_ops = {
+	.set_parent = at91sam9x5_clk_usb_set_parent,
+	.set_rate = at91sam9x5_clk_usb_set_rate,
+	.get_rate = at91sam9x5_clk_usb_get_rate,
+};
+
+static struct clk *
+_at91sam9x5_clk_register_usb(void __iomem *base, const char *name,
+			     const char **parent_names, u8 num_parents,
+			     u32 usbs_mask, u32 *clk_mux_table)
+{
+	struct at91sam9x5_clk_usb *usb;
+	struct clk *clk;
 	u32 tmp;
 	int ret;
 
-	for (i = 0; i < priv->num_clksource; i++) {
-		ret = clk_get_by_index(clk->dev, i, &source);
-		if (ret)
-			return ret;
+	if (!base || !name || !parent_names || !num_parents || !clk_mux_table)
+		return ERR_PTR(-EINVAL);
 
-		source_rate = clk_get_rate(&source);
-		if (IS_ERR_VALUE(source_rate))
-			return source_rate;
+	usb = kzalloc(sizeof(*usb), GFP_KERNEL);
+	if (!usb)
+		return ERR_PTR(-ENOMEM);
 
-		for (div = 1; div < AT91_USB_CLK_MAX_DIV + 2; div++) {
-			tmp_rate = DIV_ROUND_CLOSEST(source_rate, div);
-			tmp_diff = abs(rate - tmp_rate);
+	usb->base = base;
+	usb->usbs_mask = usbs_mask;
+	usb->num_parents = num_parents;
+	usb->clk_mux_table = clk_mux_table;
 
-			if (best_diff < 0 || best_diff > tmp_diff) {
-				best_rate = tmp_rate;
-				best_diff = tmp_diff;
-
-				best_div = div - 1;
-				best_source = source;
-				best_source_index = i;
-			}
-
-			if (!best_diff || tmp_rate < rate)
-				break;
-		}
-
-		if (!best_diff)
-			break;
+	clk = &usb->clk;
+	clk->flags = CLK_GET_RATE_NOCACHE;
+	pmc_read(usb->base, AT91_PMC_USB, &tmp);
+	tmp &= usbs_mask;
+	ret = clk_register(clk, UBOOT_DM_CLK_AT91_SAM9X5_USB, name,
+			   parent_names[tmp]);
+	if (ret) {
+		kfree(usb);
+		clk = ERR_PTR(ret);
 	}
 
-	debug("AT91 USB: best sourc: %s, best_rate = %ld, best_div = %d\n",
-	      best_source.dev->name, best_rate, best_div);
-
-	ret = clk_enable(&best_source);
-	if (ret)
-		return ret;
-
-	tmp = AT91_PMC_USB_USBS_(best_source_index) |
-	      AT91_PMC_USB_DIV_(best_div);
-	writel(tmp, &pmc->usb);
-
-	return 0;
+	return clk;
 }
 
-static struct clk_ops at91_usb_clk_ops = {
-	.get_rate = at91_usb_clk_get_rate,
-	.set_rate = at91_usb_clk_set_rate,
-};
-
-static int at91_usb_clk_ofdata_to_platdata(struct udevice *dev)
+struct clk *
+at91sam9x5_clk_register_usb(void __iomem *base, const char *name,
+			    const char **parent_names, u8 num_parents,
+			    u32 *clk_mux_table)
 {
-	struct at91_usb_clk_priv *priv = dev_get_priv(dev);
-	u32 cells[AT91_USB_CLK_SOURCE_MAX];
-	u32 num_clksource;
-
-	num_clksource = fdtdec_get_int_array_count(gd->fdt_blob,
-						   dev_of_offset(dev),
-						   "clocks", cells,
-						   AT91_USB_CLK_SOURCE_MAX);
-
-	if (!num_clksource)
-		return -1;
-
-	priv->num_clksource = num_clksource;
-
-	return 0;
+	return _at91sam9x5_clk_register_usb(base, name, parent_names,
+					    num_parents, SAM9X5_USBS_MASK,
+					    clk_mux_table);
 }
 
-static int at91_usb_clk_probe(struct udevice *dev)
+struct clk *
+sam9x60_clk_register_usb(void __iomem *base, const char *name,
+			 const char **parent_names, u8 num_parents)
 {
-	return at91_pmc_core_probe(dev);
+	return _at91sam9x5_clk_register_usb(base, name, parent_names,
+					    num_parents, SAM9X60_USBS_MASK,
+					    NULL);
 }
 
-static const struct udevice_id at91_usb_clk_match[] = {
-	{ .compatible = "atmel,at91sam9x5-clk-usb" },
-	{}
-};
-
-U_BOOT_DRIVER(at91_usb_clk) = {
-	.name = "at91-usb-clk",
+U_BOOT_DRIVER(at91_sam9x5_usb_clk) = {
+	.name = UBOOT_DM_CLK_AT91_SAM9X5_USB,
 	.id = UCLASS_CLK,
-	.of_match = at91_usb_clk_match,
-	.probe = at91_usb_clk_probe,
-	.ofdata_to_platdata = at91_usb_clk_ofdata_to_platdata,
-	.priv_auto_alloc_size = sizeof(struct at91_usb_clk_priv),
-	.platdata_auto_alloc_size = sizeof(struct pmc_platdata),
-	.ops = &at91_usb_clk_ops,
+	.ops = &at91sam9x5_usb_ops,
+	.flags = DM_FLAG_PRE_RELOC,
 };
+
+static int at91sam9n12_clk_usb_enable(struct clk *clk)
+{
+	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(clk);
+
+	pmc_update_bits(usb->base, AT91_PMC_USB, AT91_PMC_USBS,
+			AT91_PMC_USBS);
+
+	return 0;
+}
+
+static int at91sam9n12_clk_usb_disable(struct clk *clk)
+{
+	struct at91sam9x5_clk_usb *usb = to_at91sam9x5_clk_usb(clk);
+
+	pmc_update_bits(usb->base, AT91_PMC_USB, AT91_PMC_USBS, 0);
+
+	return 0;
+}
+
+static const struct clk_ops at91sam9n12_usb_ops = {
+	.enable = at91sam9n12_clk_usb_enable,
+	.disable = at91sam9n12_clk_usb_disable,
+	.set_rate = at91sam9x5_clk_usb_set_rate,
+	.get_rate = at91sam9x5_clk_usb_get_rate,
+};
+
+struct clk *
+at91sam9n12_clk_register_usb(void __iomem *base, const char *name,
+			     const char *parent_name)
+{
+	struct at91sam9x5_clk_usb *usb;
+	struct clk *clk;
+	int ret;
+
+	if (!base || !name || !parent_name)
+		return ERR_PTR(-EINVAL);
+
+	usb = kzalloc(sizeof(*usb), GFP_KERNEL);
+	if (!usb)
+		return ERR_PTR(-ENOMEM);
+
+	usb->base = base;
+	clk = &usb->clk;
+	clk->flags = CLK_GET_RATE_NOCACHE;
+	ret = clk_register(clk, UBOOT_DM_CLK_AT91_SAM9N12_USB, name,
+			   parent_name);
+	if (ret) {
+		kfree(usb);
+		clk = ERR_PTR(ret);
+	}
+
+	return clk;
+}
+
+U_BOOT_DRIVER(at91_sam9n12_usb_clk) = {
+	.name = UBOOT_DM_CLK_AT91_SAM9N12_USB,
+	.id = UCLASS_CLK,
+	.ops = &at91sam9n12_usb_ops,
+	.flags = DM_FLAG_PRE_RELOC,
+};
+

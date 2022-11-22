@@ -7,7 +7,9 @@
 
 #include <common.h>
 #include <debug_uart.h>
+#include <init.h>
 #include <vsprintf.h>
+#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/at91sam9261.h>
 #include <asm/arch/at91sam9261_matrix.h>
@@ -232,9 +234,6 @@ void board_debug_uart_init(void)
 #ifdef CONFIG_BOARD_EARLY_INIT_F
 int board_early_init_f(void)
 {
-#ifdef CONFIG_DEBUG_UART
-	debug_uart_init();
-#endif
 	return 0;
 }
 #endif
@@ -264,7 +263,7 @@ int board_init(void)
 }
 
 #ifdef CONFIG_DRIVER_DM9000
-int board_eth_init(bd_t *bis)
+int board_eth_init(struct bd_info *bis)
 {
 	return dm9000_initialize(bis);
 }

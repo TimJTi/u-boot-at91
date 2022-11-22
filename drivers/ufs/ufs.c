@@ -11,13 +11,19 @@
 #include <charset.h>
 #include <common.h>
 #include <dm.h>
+#include <log.h>
+#include <dm/device_compat.h>
+#include <dm/devres.h>
 #include <dm/lists.h>
 #include <dm/device-internal.h>
 #include <malloc.h>
 #include <hexdump.h>
 #include <scsi.h>
-
+#include <asm/io.h>
 #include <asm/dma-mapping.h>
+#include <linux/bitops.h>
+#include <linux/delay.h>
+#include <linux/dma-mapping.h>
 
 #include "ufs.h"
 
@@ -1859,7 +1865,7 @@ int ufs_start(struct ufs_hba *hba)
 int ufshcd_probe(struct udevice *ufs_dev, struct ufs_hba_ops *hba_ops)
 {
 	struct ufs_hba *hba = dev_get_uclass_priv(ufs_dev);
-	struct scsi_platdata *scsi_plat;
+	struct scsi_plat *scsi_plat;
 	struct udevice *scsi_dev;
 	int err;
 
@@ -1867,7 +1873,7 @@ int ufshcd_probe(struct udevice *ufs_dev, struct ufs_hba_ops *hba_ops)
 	if (!scsi_dev)
 		return -ENODEV;
 
-	scsi_plat = dev_get_uclass_platdata(scsi_dev);
+	scsi_plat = dev_get_uclass_plat(scsi_dev);
 	scsi_plat->max_id = UFSHCD_MAX_ID;
 	scsi_plat->max_lun = UFS_MAX_LUNS;
 	scsi_plat->max_bytes_per_req = UFS_MAX_BYTES;

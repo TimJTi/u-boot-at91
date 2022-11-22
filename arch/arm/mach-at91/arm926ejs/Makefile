@@ -19,9 +19,14 @@ obj-$(CONFIG_AT91_EFLASH)	+= eflash.o
 obj-$(CONFIG_AT91_LED)	+= led.o
 obj-y += clock.o
 obj-y += cpu.o
+ifndef CONFIG_$(SPL_TPL_)SYSRESET
 obj-y	+= reset.o
-ifeq ($(CONFIG_ATMEL_PIT_TIMER),)
-obj-y	+= timer.o
+endif
+ifneq ($(CONFIG_ATMEL_PIT_TIMER),y)
+ifneq ($(CONFIG_MCHP_PIT64B_TIMER),y)
+# old non-DM timer driver
+obj-y += timer.o
+endif
 endif
 
 ifndef CONFIG_SKIP_LOWLEVEL_INIT
