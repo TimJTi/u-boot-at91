@@ -57,6 +57,10 @@ int arch_misc_init(void)
     /*disable VDD for legacy GPS antenna*/
     val = 0;
     dm_i2c_write(dev, 0x65, &val, 1);
+
+    /* enable vdd_fuse */
+    val = 0x8A;    
+    dm_i2c_write(dev, 0x51, &val, 1);
     
     mdelay(100);
     
@@ -113,7 +117,9 @@ int arch_misc_init(void)
           sf probe 1:0; \
           sf read 0x20008000 0xC0000 0x200000; \
           cls; \
-          go 0x20008000;");
+          setcurs 0 0; \
+          lcdputs 'Running nuttx now'; \
+          go 0x20008040;");
       }
         
     }
