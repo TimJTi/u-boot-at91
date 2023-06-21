@@ -31,7 +31,6 @@
 #include <vsprintf.h>
 #include "jti_logo_8bpp.h"
 
-
 void jtinnovations_logo_info(vidinfo_t *info);  
 
 #if defined(CONFIG_ARCH_MISC_INIT)
@@ -40,14 +39,15 @@ int arch_misc_init(void)
 	struct udevice *dev;
 	int ret;
   uchar val;
-  uchar buf[4];
+
   /* set up ACT8945A */
 	ret = i2c_get_chip_for_busnum(0, 0x5B, 1, &dev);
 	if (ret) {
 		printf("Cannot find ACT8945A: %d\n", ret);
 		return 0;  
   }
-  else {
+  else
+	{
     /* set VDD_LED to 3V3 */
     val = 0x39;    
     dm_i2c_write(dev, 0x60, &val, 1);
@@ -61,16 +61,25 @@ int arch_misc_init(void)
     /* enable vdd_fuse */
     val = 0x8A;    
     dm_i2c_write(dev, 0x51, &val, 1);
+		
+	  /* GPS antenna volts */
+    /* val = 0x8A;    
+    dm_i2c_write(dev, 0x65, &val, 1); */
     
     mdelay(100);
-    
+
+   
     /* now set up and read ambient light sensor */
+#ifdef USE_ALS
+		uchar buf[4];
     ret = i2c_get_chip_for_busnum(0, 0x39, 1, &dev);
-    if (ret) {
+    if (ret)
+		{
       printf("Cannot find ADPS9901: %d\n", ret);
       return 0;
     }
-    else {
+    else
+		{
       /* disable */
       val = 0;
       dm_i2c_write(dev, 0x80, &val, 1);      
@@ -110,7 +119,8 @@ int arch_misc_init(void)
           sleep 1;" );
           
       }
-      else  {
+      else  
+			{
         env_set("bootcmd", "\
           echo Trying to load from flash...; 	\
           lcdputs loading.; \
@@ -121,8 +131,18 @@ int arch_misc_init(void)
           lcdputs 'Running nuttx now'; \
           go 0x20008040;");
       }
-        
     }
+#else
+		env_set("bootcmd", "\
+		echo Trying to load from flash...; 	\
+		lcdputs loading.; \
+		sf probe 1:0; \
+		sf read 0x20008000 0xC0000 0x200000; \
+		cls; \
+		setcurs 0 0; \
+		lcdputs 'Running nuttx now'; \
+		go 0x20008040;");
+#endif		
   }
   
   return 0;    
@@ -136,35 +156,38 @@ static void board_usb_hw_init(void)
 	struct udevice *dev;
 	int ret;
   uchar val;
+	uchar rbuf[4];
  
   
   /*Ensure power is not enabled; use as device port for now */
   atmel_pio4_set_pio_output(AT91_PIO_PORTC, 18, 0);
   //atmel_pio4_set_pio_output(AT91_PIO_PORTC, 18, 1); // ENABLED!!
 
-  /*enable VBUS OK interrupt to detect connection*/
+  /*enable VBUS OK interrupt to detect connection */
 	ret = i2c_get_chip_for_busnum(0, 0x22, 1, &dev);
 	if (ret) {
 		printf("Cannot find FUSB302: %d\n", ret);
 		//return 0;  
   }
-  else {
+  else
+	{
     val = 0x07;
     /* power up the device */
     dm_i2c_write(dev, 0x0B, &val, 1);    
     /* enable VBUS detect interrupt */
     val = 0x80;
     dm_i2c_write(dev, 0x42, &val, 1);
-#if 0      
+#if 1
     /* enable toggle functionality as a snk device */
   
     val = 0x25;
     dm_i2c_write(dev, 0x08, &val, 1);
 #endif
 
-    /* enable interrupts */
-    val = 0x04;
-    dm_i2c_write(dev, 0x06, &val, 1);
+      mdelay(250);
+      
+      dm_i2c_read(dev, 0x40, &rbuf[0], 2);
+			printf("fusb302 status reg = 0x%x\n", rbuf[0]);
   }
   
 }
@@ -219,8 +242,9 @@ int board_init(void)
 
 int dram_init(void)
 {
-	gd->ram_size = get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
-				    CONFIG_SYS_SDRAM_SIZE);
+	/* does not seem to return the correct amount */
+	gd->ram_size = CONFIG_SYS_SDRAM_SIZE;//get_ram_size((void *)CONFIG_SYS_SDRAM_BASE,
+				    //CONFIG_SYS_SDRAM_SIZE);
 	return 0;
 }
 
@@ -251,7 +275,7 @@ static void ddrc_conf(struct atmel_mpddrc_config *ddrc)
 		    ATMEL_MPDDRC_CR_CAS_DDR_CAS3 |
 		    ATMEL_MPDDRC_CR_DIC_DS |
 		    ATMEL_MPDDRC_CR_ZQ_LONG |
-		    ATMEL_MPDDRC_CR_NB_4BANKS |
+		    ATMEL_MPDDRC_CR_NB_8BANKS |
 		    ATMEL_MPDDRC_CR_DECOD_INTERLEAVED |
 		    ATMEL_MPDDRC_CR_UNAL_SUPPORTED);
 
@@ -305,7 +329,21 @@ void mem_init(void)
 	writel(0x3, &mpddrc->cal_mr4);
 	writel(64, &mpddrc->tim_cal);
 }
+/*
+int board_eth_init(bd_t *bis)
+{
+	int rc = 0;
 
+#ifdef CONFIG_USB_GADGET_ATMEL_USBA
+	usba_udc_probe(&pdata);
+#ifdef CONFIG_USB_ETH_RNDIS
+	usb_eth_initialize(bis);
+#endif
+#endif
+
+	return rc;
+}
+*/
 void at91_pmc_init(void)
 {
 	u32 tmp;
