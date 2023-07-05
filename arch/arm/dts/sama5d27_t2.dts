@@ -1,14 +1,12 @@
 
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * at91-sama5d27_giantboard.dts - Device Tree file for Giant Board
- *
- * Copyright (C) 2020 Greg Gallagher <greg@embeddedgreg.com>
+ * sama5d27_t2.dts - Device Tree file for JTi Toucan2
  *
  * Derived from at91-sama5d27_som1_ek.dts
  *
- * Copyright (C) 2017 Microchip Corporation
- *		      Wenyou Yang <wenyou.yang@microchip.com>
+ * Copyright (C) 2023 JT Innovations Ltd.
+ *		      Tim Hardisty <timh@jti.uk.com>
  */
 /dts-v1/;
 #include "sama5d2.dtsi"

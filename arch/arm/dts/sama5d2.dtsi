@@ -67,11 +67,9 @@
 		usb0: gadget@00300000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
-      //interrupt-parent = <42>;
 			compatible = "atmel,sama5d3-udc";
 			reg = <0x300000 0x100000
              0xfc02c000 0x400>;
-      //interrupts = <42 IRQ_TYPE_LEVEL_HIGH 2>;
       clocks = <&pmc PMC_TYPE_PERIPHERAL 42>, <&pmc PMC_TYPE_PERIPHERAL 42>, <&pmc PMC_TYPE_SYSTEM ID_USBD>;
 			clock-names = "pclk", "dclk", "udpck";
 			status = "disabled";
@@ -81,6 +79,7 @@
         atmel,fifo-size = <64>;
         atmel,nb-banks = <1>;
       };
+
 			ep1: endpoint@1 {
 				reg = <1>;
 				atmel,fifo-size = <1024>;

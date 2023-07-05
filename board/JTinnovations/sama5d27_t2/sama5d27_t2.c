@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0+
 /*
- * Copyright (C) 2017 Microchip Corporation
- *		      Wenyou.Yang <wenyou.yang@microchip.com>
+ * Copyright (C) 2023 JT Innovations Ltd.
+ *		      Tim Hardisty <timh@jti.uk.com>
  */
 
 #include <common.h>
