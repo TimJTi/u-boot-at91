@@ -23,7 +23,9 @@ ifndef CONFIG_LTO
 PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections
 endif
 
-PLATFORM_RELFLAGS += -fno-common -ffixed-r9
+-mfpu=neon -mfloat-abi=hard
+
+PLATFORM_RELFLAGS += -fno-common -ffixed-r9 
 PLATFORM_RELFLAGS += $(call cc-option, -msoft-float) \
 		     $(call cc-option,-mgeneral-regs-only) \
       $(call cc-option,-mshort-load-bytes,$(call cc-option,-malignment-traps,))

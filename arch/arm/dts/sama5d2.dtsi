@@ -1,6 +1,7 @@
 #include "skeleton.dtsi"
 #include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/clk/at91.h>
+#include <dt-bindings/clock/at91.h>
 
 / {
 	model = "Atmel SAMA5D2 family SoC";
@@ -13,6 +14,7 @@
 		spi2 = &qspi1;
 		i2c0 = &i2c0;
 		i2c1 = &i2c1;
+
 	};
 
 	clocks {
@@ -61,6 +63,125 @@
 		#address-cells = <1>;
 		#size-cells = <1>;
 		u-boot,dm-pre-reloc;
+
+		usb0: gadget@00300000 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+      //interrupt-parent = <42>;
+			compatible = "atmel,sama5d3-udc";
+			reg = <0x300000 0x100000
+             0xfc02c000 0x400>;
+      //interrupts = <42 IRQ_TYPE_LEVEL_HIGH 2>;
+      clocks = <&pmc PMC_TYPE_PERIPHERAL 42>, <&pmc PMC_TYPE_PERIPHERAL 42>, <&pmc PMC_TYPE_SYSTEM ID_USBD>;
+			clock-names = "pclk", "dclk", "udpck";
+			status = "disabled";
+
+      ep0: endpoint@0 {
+        reg = <0>;
+        atmel,fifo-size = <64>;
+        atmel,nb-banks = <1>;
+      };
+			ep1: endpoint@1 {
+				reg = <1>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <3>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep2: endpoint@2 {
+				reg = <2>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <3>;
+				atmel,can-dma;
+				atmel,can-isoc;
+			};
+
+			ep3: endpoint@3 {
+				reg = <3>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+			};
+
+			ep4: endpoint@4 {
+				reg = <4>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+			};
+
+			ep5: endpoint@5 {
+				reg = <5>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+			};
+
+			ep6: endpoint@6 {
+				reg = <6>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+			};
+
+			ep7i: endpoint@7 {
+				reg = <7>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+				atmel,can-dma;
+			};
+
+			ep8: endpoint@8 {
+				reg = <8>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep9: endpoint@9 {
+				reg = <9>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep10: endpoint@a {
+				reg = <10>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep11: endpoint@b {
+				reg = <11>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep12: endpoint@c {
+				reg = <12>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep13: endpoint@d {
+				reg = <13>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep14: endpoint@e {
+				reg = <14>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+			ep15: endpoint@f {
+				reg = <15>;
+				atmel,fifo-size = <1024>;
+				atmel,nb-banks = <2>;
+			};
+
+    };
+
 
 		usb1: ohci@400000 {
 			compatible = "atmel,at91rm9200-ohci", "usb-ohci";
@@ -285,6 +406,7 @@
 
 			aic: interrupt-controller@fc020000 {
 				#interrupt-cells = <3>;
+        #address-cells = <1>;
 				compatible = "atmel,sama5d2-aic";
 				interrupt-controller;
 				reg = <0xfc020000 0x200>;

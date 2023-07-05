@@ -181,6 +181,27 @@ config TARGET_SAMA5D2_XPLAINED
 	select SAMA5D2
 	select SUPPORT_SPL
 
+config TARGET_SAMA5D27_T2
+	bool "SAMA5D27 T2 board"
+	select SAMA5D2
+	select BOARD_EARLY_INIT_F
+	select BOARD_LATE_INIT
+	select CPU_V7A
+	help
+    The SAMA5D27 T2 board uses a SAMA5D27-D5M processor,
+    a 1Gbit QSPI flash, 256k SPI flash, 128kbit SPI EEPROM,
+    and a multitude of application specific devices
+      GPS with motion sensors
+      RGB LED drivers
+      proximity and light sensors
+      Bluetooth LE module
+      24 bit RGB LCD interface
+      Dual CAN
+      Mono class D audio driver
+      USB-C
+      Kline-LIN
+      analogue and digital IO.
+
 config TARGET_SAMA5D27_SOM1_EK
 	bool "SAMA5D27 SOM1 EK board"
 	select SAMA5D2
@@ -325,6 +346,7 @@ source "board/atmel/sam9x60ek/Kconfig"
 source "board/atmel/sam9x60_curiosity/Kconfig"
 source "board/atmel/sama7g5ek/Kconfig"
 source "board/atmel/sama5d2_ptc_ek/Kconfig"
+source "board/JTinnovations/sama5d27_t2/Kconfig"
 source "board/atmel/sama5d2_xplained/Kconfig"
 source "board/atmel/sama5d27_som1_ek/Kconfig"
 source "board/atmel/sama5d27_wlsom1_ek/Kconfig"

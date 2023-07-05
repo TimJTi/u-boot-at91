@@ -1,0 +1,264 @@
+
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * at91-sama5d27_giantboard.dts - Device Tree file for Giant Board
+ *
+ * Copyright (C) 2020 Greg Gallagher <greg@embeddedgreg.com>
+ *
+ * Derived from at91-sama5d27_som1_ek.dts
+ *
+ * Copyright (C) 2017 Microchip Corporation
+ *		      Wenyou Yang <wenyou.yang@microchip.com>
+ */
+/dts-v1/;
+#include "sama5d2.dtsi"
+#include "sama5d2-pinfunc.h"
+
+/ {
+	model = "JTi T2";
+	compatible = "atmel,sama5d27_t2", "atmel,sama5d2", "atmel,sama5";
+
+	memory {
+		reg = <0x20000000 0x8000000>;
+	};
+
+	aliases {
+		spi0 = &spi0;
+    spi1 = &qspi0;
+	};
+
+	chosen {
+		u-boot,dm-pre-reloc;
+		stdout-path = &uart1;
+	};
+
+	clocks {
+		slow_xtal: slow_xtal {
+			clock-frequency = <32768>;
+		};
+
+		main_xtal: main_xtal {
+			clock-frequency = <24000000>;
+		};
+	};
+
+	ahb {
+		usb0: gadget@00300000 {
+			atmel,vbus-gpio = <&pioA 29 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usba_vbus>;
+			status = "okay";
+		};  
+
+		usb1: ohci@400000 {
+			num-ports = <3>;
+			atmel,vbus-gpio = <&pioA 41 0>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_usb_default>;
+			status = "okay";
+		};    
+
+		usb2: ehci@500000 {
+			status = "okay";
+		};
+
+		apb {
+
+			uart1: serial@f8020000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_uart1_default>;
+				status = "okay";
+				u-boot,dm-pre-reloc;
+			};
+
+			i2c0: i2c@f8028000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c0_default>;
+				status = "okay";
+
+				pmic@5b {
+					compatible = "active-semi,act8945a";
+					reg = <0x5b>;
+					active-semi,vsel-low;
+					status = "okay";
+				};
+			};
+
+			i2c1: i2c@fc028000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_i2c1_default>;
+				status = "okay";
+			};
+
+			hlcdc: hlcdc@f0000000 {
+				atmel,vl-bpix = <4>;
+				atmel,guard-time = <1>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_lcd_base &pinctrl_lcd_pwm &pinctrl_lcd_rgb8888>;
+				status = "okay";
+				u-boot,dm-pre-reloc;
+
+				display-timings {
+					u-boot,dm-pre-reloc;
+					800x480 {
+						clock-frequency = <33300000>;
+						hactive = <800>;
+						vactive = <480>;
+						hsync-len = <20>;
+						hfront-porch = <210>;
+						hback-porch = <46>;
+						vfront-porch = <22>;
+						vback-porch = <23>;
+						vsync-len = <10>;
+						u-boot,dm-pre-reloc;
+					};
+				};
+			};
+
+			qspi0: spi@f0020000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_qspi0_sck_cs_default &pinctrl_qspi0_dat_default>;
+				status = "okay";
+				u-boot,dm-pre-reloc;
+
+				flash@0 {
+					compatible = "mt25ql01g,gd55B01,spi-nor";
+					reg = <0>;
+					spi-max-frequency = <50000000>;
+					spi-rx-bus-width = <4>;
+					spi-tx-bus-width = <4>;
+					u-boot,dm-pre-reloc;
+				};
+			};
+
+			spi0: spi@f8000000 {
+				cs-gpios = <&pioA 17 0>, <&pioA 18 0>, <0>, <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_spi0_default>;
+				status = "okay";
+				u-boot,dm-pre-reloc;
+        
+        spi_flash@0 {
+					compatible = "microchip, at25";
+					reg = <0>;
+					spi-max-frequency = <2500000>;
+          pagesize = <64>;
+          size = <131072>;
+					u-boot,dm-pre-reloc;
+        };         
+
+				spi_flash@1 {
+					compatible = "mt25ql256a,gd25lq256d,spi-nor";
+					reg = <1>;
+					spi-max-frequency = <50000000>;
+					u-boot,dm-pre-reloc;
+				};
+			};
+
+			pit: timer@f8048030 {
+				status = "okay";
+				u-boot,dm-pre-reloc;
+			};
+
+			sfr: sfr@f8030000 {
+				status = "okay";
+				u-boot,dm-pre-reloc;
+			};
+
+			pioA: pinctrl@fc038000 {
+
+				pinctrl_uart1_default: uart1_default {
+					pinmux = <PIN_PD2__URXD1>,
+						 <PIN_PD3__UTXD1>;
+					bias-disable;
+					u-boot,dm-pre-reloc;
+				};
+
+				pinctrl_i2c0_default: i2c0_default {
+					pinmux = <PIN_PD29__TWD0>,
+						 <PIN_PD30__TWCK0>;
+					bias-disable;
+				};
+
+				pinctrl_i2c1_default: i2c1_default {
+					pinmux = <PIN_PD4__TWD1>,
+						 <PIN_PD5__TWCK1>;
+					bias-disable;
+				};
+
+				pinctrl_usb_default: usb_default {
+					//pinmux = <PIN_PC18__GPIO>;
+					pinmux = <PIN_PD9__GPIO>;
+					bias-disable;
+				};
+
+				pinctrl_usba_vbus: usba_vbus {
+					pinmux = <PIN_PA29__GPIO>;
+					bias-disable;
+				};
+
+				pinctrl_lcd_base: pinctrl_lcd_base {
+					pinmux = <PIN_PC5__LCDVSYNC>,
+						 <PIN_PC6__LCDHSYNC>,
+						 <PIN_PC8__LCDDEN>,
+						 <PIN_PC7__LCDPCK>;
+					bias-disable;
+				};
+
+				pinctrl_lcd_pwm: pinctrl_lcd_pwm {
+					pinmux = <PIN_PC3__LCDPWM>;
+					bias-disable;
+				};
+
+				pinctrl_lcd_rgb8888: pinctrl_lcd_rgb8888 {
+					pinmux = <PIN_PB11__LCDDAT0>,
+						 <PIN_PB12__LCDDAT1>,
+						 <PIN_PB13__LCDDAT2>,
+						 <PIN_PB14__LCDDAT3>,
+						 <PIN_PB15__LCDDAT4>,
+						 <PIN_PB16__LCDDAT5>,
+						 <PIN_PB17__LCDDAT6>,
+						 <PIN_PB18__LCDDAT7>,
+						 <PIN_PB21__LCDDAT10>,
+						 <PIN_PB22__LCDDAT11>,
+						 <PIN_PB23__LCDDAT12>,
+						 <PIN_PB24__LCDDAT13>,
+						 <PIN_PB25__LCDDAT14>,
+						 <PIN_PB26__LCDDAT15>,
+						 <PIN_PB29__LCDDAT18>,
+						 <PIN_PB30__LCDDAT19>,
+						 <PIN_PB31__LCDDAT20>,
+						 <PIN_PC0__LCDDAT21>,
+						 <PIN_PC1__LCDDAT22>,
+						 <PIN_PC2__LCDDAT23>;
+					bias-disable;
+				};
+        pinctrl_qspi0_sck_cs_default: qspi0_sck_cs_default {
+          pinmux = <PIN_PA0__QSPI0_SCK>,
+            <PIN_PA1__QSPI0_CS>;
+          bias-disable;
+          u-boot,dm-pre-reloc;
+        };
+
+				pinctrl_qspi0_dat_default: qspi0_dat_default {
+          pinmux = <PIN_PA5__QSPI0_IO3>,
+            <PIN_PA4__QSPI0_IO2>,
+            <PIN_PA3__QSPI0_IO1>,
+            <PIN_PA2__QSPI0_IO0>;
+          bias-pull-up;
+          u-boot,dm-pre-reloc;
+        };
+
+        pinctrl_spi0_default: spi0_default {
+          pinmux = <PIN_PA14__SPI0_SPCK>,
+            <PIN_PA15__SPI0_MOSI>,
+            <PIN_PA16__SPI0_MISO>,
+            <PIN_PA17__SPI0_NPCS0>,
+            <PIN_PA18__SPI0_NPCS1>;
+          bias-pull-up;
+          u-boot,dm-pre-reloc;
+        };
+			};
+		};
+	};
+};
