@@ -6,13 +6,10 @@
 
 #include <common.h>
 #include <debug_uart.h>
-//#include <fdtdec.h>
 #include <init.h>
-//#include <asm/global_data.h>
 #include <asm/io.h>
 #include <asm/arch/at91_common.h>
 #include <asm/arch/atmel_pio4.h>
-//#include <asm/arch/atmel_mpddrc.h>
 #include <asm/arch/clk.h>
 #include <asm/arch/gpio.h>
 #include <asm/arch/sama5d2.h>
@@ -20,7 +17,6 @@
 
 #include <env.h>
 #include <dm.h>
-//#include <net.h>
 #include <i2c.h>
 #include <spi.h>
 #include <spi_flash.h>
@@ -30,9 +26,11 @@
 #include <video_console.h>
 #include <vsprintf.h>
 #include "jti_logo_8bpp.h"
-//#include <asm/arch/atmel_usba_udc.h>
 
 #define USE_ALS
+#if 0
+#define USE_ALS_DEBUG
+#endif
 #define ALS_PERCENT_DIFF 130
 #define SHOW_MEM_INFO
 
@@ -115,7 +113,9 @@ int arch_misc_init(void)
         alsL = (((unsigned short int) buf[2] << 16) +
                 ((unsigned short int) buf[1] << 8) +
                 ((unsigned short int) buf[0]));
-        //printf("als Left: %d\t Right %d\n", alsL, alsR);
+#ifdef USE_ALS_DEBUG                
+        printf("als Left: %d\t Right %d\n", alsL, alsR);
+#endif
         if ((alsL < 50) && 
            ((alsL * ALS_PERCENT_DIFF) < (ALS_PERCENT_DIFF * alsR)))
            {
@@ -157,11 +157,12 @@ int arch_misc_init(void)
 		setcurs 0 0; \
 		lcdputs 'Running nuttx now'; \
 		go 0x20008040;");
-    //<name> ram <offset> <size>  raw access to sf device
-    //env_set("dfu_alt_info", "app raw 0 0x8000000;");
-    //env_set("dfu_alt_info_ram", "dummy.bin ram 0x24000000 0x100;");
-    //env_set("ethact", "usb_ether");
-
+#if 0
+    <name> ram <offset> <size>  raw access to sf device
+    env_set("dfu_alt_info", "app raw 0 0x8000000;");
+    env_set("dfu_alt_info_ram", "dummy.bin ram 0x24000000 0x100;");
+    env_set("ethact", "usb_ether");
+#endif
 #endif		
   }
   
@@ -262,9 +263,6 @@ int video_show_board_info(void)
 	const char *s;
 	vidinfo_t logo_info;
 	int ret;
-
-	if (ret)
-		return ret;
 
 	len += sprintf(&buf[len], "%s\n", U_BOOT_VERSION);
 	memcpy(&buf[len], corp, strlen(corp));

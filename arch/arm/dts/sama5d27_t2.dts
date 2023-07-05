@@ -55,11 +55,11 @@
 			atmel,vbus-gpio = <&pioA 41 0>;
 			pinctrl-names = "default";
 			pinctrl-0 = <&pinctrl_usb_default>;
-			status = "okay";
+			status = "disabled";
 		};    
 
 		usb2: ehci@500000 {
-			status = "okay";
+			status = "disabled";
 		};
 
 		apb {
@@ -187,8 +187,7 @@
 				};
 
 				pinctrl_usb_default: usb_default {
-					//pinmux = <PIN_PC18__GPIO>;
-					pinmux = <PIN_PD9__GPIO>;
+					pinmux = <PIN_PC18__GPIO>;
 					bias-disable;
 				};
 
