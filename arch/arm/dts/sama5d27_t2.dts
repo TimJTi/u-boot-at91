@@ -7,7 +7,7 @@
 	compatible = "atmel,sama5d27-t2", "atmel,sama5d2", "atmel,sama5";
   
 	memory {
-		reg = <0x20000000 0x4000000>;
+		reg = <0x20000000 0x8000000>;
 	};  
   
 	aliases {
@@ -76,11 +76,11 @@
 				u-boot,dm-pre-reloc;
 
 				flash@0 {
-					compatible = "mt25ql01g,spi-nor";
+					compatible = "jedec,spi-nor";
 					reg = <0>;
-					spi-max-frequency = <83000000>;
+					spi-max-frequency = <66000000>;
 					spi-rx-bus-width = <4>;
-					spi-tx-bus-width = <4>;
+					spi-tx-bus-width = <1>;
 					u-boot,dm-pre-reloc;
 				};
 			};

@@ -39,15 +39,15 @@ int arch_misc_init(void)
 {
 	struct udevice *dev;
 	int ret;
-  uchar val;
-  uchar buf[4];
-  /* set up ACT8945A */
+  	uchar val;
+
+  	/* set up ACT8945A */
 	ret = i2c_get_chip_for_busnum(0, 0x5B, 1, &dev);
 	if (ret) {
 		printf("Cannot find ACT8945A: %d\n", ret);
 		return 0;  
-  }
-  else {
+  	}
+  	else {
     /* set VDD_LED to 3V3 */
     val = 0x39;    
     dm_i2c_write(dev, 0x60, &val, 1);
@@ -63,43 +63,17 @@ int arch_misc_init(void)
     dm_i2c_write(dev, 0x51, &val, 1);
     
     mdelay(100);
-    
-    /* now set up and read ambient light sensor */
-    ret = i2c_get_chip_for_busnum(0, 0x39, 1, &dev);
+#if 0
+    ret = i2c_get_chip_for_busnum(0, 0x53, 1, &dev);
     if (ret) {
-      printf("Cannot find ADPS9901: %d\n", ret);
+      printf("Cannot find APDS9922: %d\n", ret);
       return 0;
     }
-    else {
-      /* disable */
-      val = 0;
-      dm_i2c_write(dev, 0x80, &val, 1);      
-      /* ATIME default */
-      val = 0xED;
-      dm_i2c_write(dev, 0x81, &val, 1);
-      /* PTIME default */
-      val = 0xFF;
-      dm_i2c_write(dev, 0x82, &val, 1);
-      /* WTIME default */
-      val = 0xFF;
-      dm_i2c_write(dev, 0x83, &val, 1);    
-      /* PPCOUNT default */
-      val = 0x08;
-      dm_i2c_write(dev, 0x8E, &val, 1);      
-      /* CONTROL defaults */
-      val = 0x20;
-      dm_i2c_write(dev, 0x8F, &val, 1);
-      /* enable prox and ALS */
-      val = 0x07;
-      dm_i2c_write(dev, 0x80, &val, 1);    
-      
-      /* wait to accumulate some data */
-      mdelay(200);
-      
-      dm_i2c_read(dev, 0xB4, &buf[0], 2);
-
-      unsigned short int als = (((unsigned short int) buf[1]<<8) + ((unsigned short int) buf[0]));
-      if (als < 50) {
+	else {
+	  	uchar buf[4];
+      	unsigned short int als = (((unsigned short int) buf[1]<<8) + ((unsigned short int) buf[0]));
+		/*do some setup??*/
+      	if (als < 50) {
         env_set("bootcmd", "\
           echo Boot interrupted via ambient light sensor method; \
           setcurs 0 10; \
@@ -110,19 +84,30 @@ int arch_misc_init(void)
           sleep 1;" );
           
       }
-      else  {
+      else  
+	  {
         env_set("bootcmd", "\
           echo Trying to load from flash...; 	\
           lcdputs loading.; \
           sf probe 1:0; \
-          sf read 0x20008000 0xC0000 0x200000; \
+          sf read 0x20008000 0x100000 0x200000; \
           cls; \
           setcurs 0 0; \
           lcdputs 'Running nuttx now'; \
-          go 0x20008040;");
+          go 0x20008000;");
       }
-        
     }
+#else
+	env_set("bootcmd", "\
+		echo Trying to load from flash...; 	\
+		lcdputs loading.; \
+		sf probe 1:0; \
+		sf read 0x20008000 0x100000 0x200000; \
+		cls; \
+		setcurs 0 0; \
+		lcdputs 'Running nuttx now'; \
+		go 0x20008000;");
+#endif
   }
   
   return 0;    
@@ -224,14 +209,9 @@ int dram_init(void)
 	return 0;
 }
 
-#define MAC24AA_MAC_OFFSET	0xfa
-
 #ifdef CONFIG_MISC_INIT_R
 int misc_init_r(void)
 {
-#ifdef CONFIG_I2C_EEPROM
-	at91_set_ethaddr(MAC24AA_MAC_OFFSET);
-#endif
 	return 0;
 }
 #endif
@@ -251,7 +231,7 @@ static void ddrc_conf(struct atmel_mpddrc_config *ddrc)
 		    ATMEL_MPDDRC_CR_CAS_DDR_CAS3 |
 		    ATMEL_MPDDRC_CR_DIC_DS |
 		    ATMEL_MPDDRC_CR_ZQ_LONG |
-		    ATMEL_MPDDRC_CR_NB_4BANKS |
+		    ATMEL_MPDDRC_CR_NB_8BANKS |
 		    ATMEL_MPDDRC_CR_DECOD_INTERLEAVED |
 		    ATMEL_MPDDRC_CR_UNAL_SUPPORTED);
 
@@ -339,6 +319,11 @@ void at91_pmc_init(void)
 #ifdef CONFIG_DM_VIDEO
 
 int at91_video_show_board_info(void)
+#if 1
+{
+	return 0;
+}
+#else
 {
 	struct vidconsole_priv *priv;
 	ulong dram_size;
@@ -367,15 +352,15 @@ int at91_video_show_board_info(void)
 		dram_size += gd->bd->bi_dram[i].size;
 	len += sprintf(&buf[len], "%ld MiB SDRAM", dram_size >> 20);
   
-  flash = spi_flash_probe(1, 0, 1000000, SPI_MODE_0);
-  if (flash)  {
-    len += sprintf(&buf[len], ", %dMiB program memory", flash->size >> 20);
-  }
-  flash = spi_flash_probe(0, 1, 50000000, SPI_MODE_0);
-  if (flash)  {
-    len += sprintf(&buf[len], ", %dMiB log memory", flash->size >> 20);
-  }
-  len += sprintf(&buf[len], "\n");
+	flash = spi_flash_probe(1, 0, 1000000, SPI_MODE_0);
+	if (flash)  {
+		len += sprintf(&buf[len], ", %dMiB program memory", flash->size >> 20);
+	}
+	flash = spi_flash_probe(0, 1, 50000000, SPI_MODE_0);
+	if (flash)  {
+		len += sprintf(&buf[len], ", %dMiB log memory", flash->size >> 20);
+	}
+	len += sprintf(&buf[len], "\n");
 
 	ret = uclass_get_device(UCLASS_VIDEO, 0, &dev);
 	if (ret)
@@ -409,7 +394,8 @@ void jtinnovations_logo_info(vidinfo_t *info)
 	info->logo_y_offset = JTINNOVATIONS_LOGO_8BPP_X_OFFSET;
 	info->logo_addr = (u_long)jtinnovations_logo_8bpp;
 }
-#endif
+#endif /* CONFIG_DM_VIDEO */
+#endif /* #if 0 */
 
 void at91_prepare_cpu_var(void)
 {
